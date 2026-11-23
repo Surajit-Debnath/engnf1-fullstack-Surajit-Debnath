@@ -37,12 +37,34 @@ const updateTicketSchema = z
     message: "At least one field must be provided",
   });
 
+
 const ticketQuerySchema = z.object({
   status: ticketStatusEnum.optional(),
+
   category: ticketCategoryEnum.optional(),
+
   priority: ticketPriorityEnum.optional(),
-  q: z.string().trim().max(200, "Search query cannot exceed 200 characters").optional(),
+
+  q: z
+    .string()
+    .trim()
+    .max(200, "Search query cannot exceed 200 characters")
+    .optional(),
+
+  page: z.coerce
+    .number()
+    .int("Page must be an integer")
+    .min(1, "Page must be at least 1")
+    .default(1),
+
+  limit: z.coerce
+    .number()
+    .int("Limit must be an integer")
+    .min(1, "Limit must be at least 1")
+    .max(100, "Limit cannot exceed 100")
+    .default(10),
 });
+
 
 module.exports = {
   objectIdSchema,

@@ -33,7 +33,6 @@ const ticketSchema = new mongoose.Schema(
         "DELIVERY",
       ],
       required: true,
-      immutable: true,
     },
 
     // Current category. An agent can manually change this.
