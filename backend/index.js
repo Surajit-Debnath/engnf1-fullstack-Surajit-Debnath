@@ -14,3 +14,7 @@ async function connect() {
   console.log('Mongo connected');
 }
 connect();
+app.use(express.json());
+app.get("/api/health",(req,res)=>{
+    res.json({"message":"ok"})
+});

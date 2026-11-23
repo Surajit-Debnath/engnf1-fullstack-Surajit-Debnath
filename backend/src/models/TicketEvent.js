@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const ticketEventSchema = new mongoose.Schema(
   {
@@ -27,6 +27,7 @@ const ticketEventSchema = new mongoose.Schema(
     actor: {
       type: String,
       required: true,
+      trim:true,
     },
   },
   {
