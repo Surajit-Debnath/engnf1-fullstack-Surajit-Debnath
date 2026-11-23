@@ -39,4 +39,4 @@ ticketEventSchema.index({ ticketId: 1, createdAt: -1 });
 
 const TicketEvent = mongoose.model("TicketEvent", ticketEventSchema);
 
-export default TicketEvent;
+module.exports=TicketEvent;

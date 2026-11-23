@@ -93,4 +93,4 @@ ticketSchema.index({ createdAt: -1 });
 
 const Ticket = mongoose.model("Ticket", ticketSchema);
 
-export default Ticket;
+module.exports=Ticket;

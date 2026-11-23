@@ -57,4 +57,4 @@ bookingSchema.index({ resourceId: 1, startTime: 1, endTime: 1 });
 
 const Booking = mongoose.model("Booking", bookingSchema);
 
-export default Booking;
+module.exports=Booking;

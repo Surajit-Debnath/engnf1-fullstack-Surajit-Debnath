@@ -3,7 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const PORT = process.env.PORT;
 const MONGODB_URL = process.env.MONGODB_URL;
-
+const {authRouter}=require("./routes/authRouter")
 const app = express();
 
 async function connect() {
@@ -18,3 +18,8 @@ app.use(express.json());
 app.get("/api/health",(req,res)=>{
     res.json({"message":"ok"})
 });
+
+
+app.use("/api/auth",authRouter);
+
+

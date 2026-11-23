@@ -11,28 +11,31 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      trim: true,
-      lowercase: true,
       unique: true,
+      lowercase: true,
+      trim: true,
     },
 
     passwordHash: {
       type: String,
       required: true,
-      select: false, // Never returned by default
+      select: false,
     },
 
     role: {
       type: String,
-      enum: ['USER', 'ADMIN'],
-      default: 'USER',
+      enum: ["USER", "ADMIN"],
+      default: "USER",
     },
   },
   {
-    timestamps: { createdAt: true, updatedAt: false },
+    timestamps: {
+      createdAt: true,
+      updatedAt: false,
+    },
   }
 );
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
-export default User;
+module.exports = User;

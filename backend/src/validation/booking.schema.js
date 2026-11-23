@@ -1,21 +1,16 @@
-
 const { z } = require("zod");
+const { objectIdSchema } = require("./ticket.schema");
+
+const isoDateTimeSchema = z.string().datetime({
+  offset: true,
+  message: "Must be a valid ISO 8601 date-time with timezone",
+});
 
 const createBookingSchema = z.object({
-  resourceId: z.string().min(1, "Resource ID is required"),
-
-  ticketId: z.string().nullable().optional(),
-
-  startTime: z.string().datetime({
-    offset: true,
-    message: "Start time must be a valid ISO 8601 timestamp",
-  }),
-
-  endTime: z.string().datetime({
-    offset: true,
-    message: "End time must be a valid ISO 8601 timestamp",
-  }),
-
+  resourceId: objectIdSchema,
+  ticketId: objectIdSchema.nullable().optional(),
+  startTime: isoDateTimeSchema,
+  endTime: isoDateTimeSchema,
   purpose: z
     .string()
     .trim()
@@ -31,7 +26,4 @@ const rejectBookingSchema = z.object({
     .max(200, "Rejection note cannot exceed 200 characters"),
 });
 
-module.exports = {
-  createBookingSchema,
-  rejectBookingSchema,
-};
+module.exports = { createBookingSchema, rejectBookingSchema };

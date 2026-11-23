@@ -1,11 +1,6 @@
-
 const { z } = require("zod");
 
-const resourceTypeEnum = z.enum([
-  "ROOM",
-  "LAB",
-  "EQUIPMENT",
-]);
+const resourceTypeEnum = z.enum(["ROOM", "LAB", "EQUIPMENT"]);
 
 const createResourceSchema = z.object({
   name: z
@@ -13,15 +8,12 @@ const createResourceSchema = z.object({
     .trim()
     .min(3, "Resource name must contain at least 3 characters")
     .max(60, "Resource name cannot exceed 60 characters"),
-
   type: resourceTypeEnum,
-
   capacity: z
-    .number()
+    .number({ message: "Capacity must be a number" })
     .int("Capacity must be an integer")
     .min(1, "Capacity must be at least 1")
     .max(500, "Capacity cannot exceed 500"),
-
   description: z
     .string()
     .trim()
@@ -32,12 +24,8 @@ const createResourceSchema = z.object({
 
 const updateResourceSchema = createResourceSchema
   .partial()
-  .refine(
-    (data) => Object.keys(data).length > 0
-  );
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided",
+  });
 
-module.exports = {
-  resourceTypeEnum,
-  createResourceSchema,
-  updateResourceSchema,
-};
+module.exports = { resourceTypeEnum, createResourceSchema, updateResourceSchema };
