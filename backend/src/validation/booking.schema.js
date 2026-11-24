@@ -75,8 +75,90 @@ const bookingSchema = z.object({
     });
   }
 });
+const bookingStatuses = [
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+  "CANCELLED",
+];
+const myBookingsQuerySchema = z.object({
+  status: z.enum(bookingStatuses).optional(),
 
+  page: z.coerce.number().int().min(1).default(1),
+}).strict();
+
+
+
+
+
+const adminBookingsQuerySchema = z.object({
+  status: z.enum(bookingStatuses).optional(),
+
+  resourceId: z
+    .string()
+    .regex(/^[0-9a-fA-F]{24}$/, "Invalid resource ID")
+    .optional(),
+
+  from: z
+    .string()
+    .datetime({ offset: false })
+    .optional(),
+
+  to: z
+    .string()
+    .datetime({ offset: false })
+    .optional(),
+
+  page: z
+    .string()
+    .regex(/^[1-9]\d*$/, "Page must be a positive integer")
+    .transform(Number)
+    .refine(Number.isSafeInteger, "Invalid page number")
+    .default("1"),
+})
+.strict()
+.superRefine((data, ctx) => {
+  // from and to must be provided together.
+  if (Boolean(data.from) !== Boolean(data.to)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: [data.from ? "to" : "from"],
+      message: "Both from and to are required",
+    });
+
+    return;
+  }
+
+  // from must be earlier than to.
+  if (data.from && data.to) {
+    if (new Date(data.from) >= new Date(data.to)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["to"],
+        message: "to must be later than from",
+      });
+    }
+  }
+});
+// Validate booking ID in URL parameters
+const bookingParamsSchema = z.object({
+  id: z
+    .string()
+    .regex(/^[a-fA-F0-9]{24}$/, "Invalid booking ID"),
+});
+
+// Rejection requires a non-empty note
+const rejectBookingSchema = z.object({
+  note: z
+    .string()
+    .trim()
+    .min(1, "Rejection note is required"),
+}).strict();
 module.exports = {
   bookingSchema,
   objectIdSchema,
+  myBookingsQuerySchema,
+  adminBookingsQuerySchema,
+  bookingParamsSchema,
+  rejectBookingSchema
 };
