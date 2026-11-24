@@ -1,16 +1,16 @@
-import axios from "axios";
-import { BACKEND_URL } from "../config";
+import axios from 'axios';
+import { BACKEND_URL } from '../config';
 
 export const api = axios.create({
-    baseURL: BACKEND_URL
+  baseURL: BACKEND_URL,
 });
 
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem("token");
+  const token = localStorage.getItem('token');
 
-    if (token) {
-        config.headers.set("token", token);
-    }
+  if (token) {
+    config.headers.set('token', token);
+  }
 
-    return config;
+  return config;
 });

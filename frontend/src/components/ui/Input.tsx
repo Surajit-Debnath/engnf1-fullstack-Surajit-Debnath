@@ -1,71 +1,66 @@
-import { useId } from "react";
-import type { Ref, ReactElement } from "react";
+import { useId } from 'react';
+import type { Ref, ReactElement } from 'react';
 
 export interface InputProps {
-    type: "text" | "password" | "email" | "number" | "tel";
-    placeholder: string;
-    reference?: Ref<HTMLInputElement>;
-    label?: string;
-    startIcon?: ReactElement;
-    endIcon?: ReactElement;
-    error?: string;
-    disabled?: boolean;
-    required?: boolean;
-    className?: string;
-    autoComplete?: string;
+  type: 'text' | 'password' | 'email' | 'number' | 'tel';
+  placeholder: string;
+  reference?: Ref<HTMLInputElement>;
+  label?: string;
+  startIcon?: ReactElement;
+  endIcon?: ReactElement;
+  error?: string;
+  disabled?: boolean;
+  required?: boolean;
+  className?: string;
+  autoComplete?: string;
 }
 
 export function Input({
-    type,
-    placeholder,
-    reference,
-    label,
-    startIcon,
-    endIcon,
-    error,
-    disabled,
-    required,
-    className,
-    autoComplete
+  type,
+  placeholder,
+  reference,
+  label,
+  startIcon,
+  endIcon,
+  error,
+  disabled,
+  required,
+  className,
+  autoComplete,
 }: InputProps) {
+  const id = useId();
 
-    const id = useId();
+  return (
+    <div className="w-full">
+      {label && (
+        <label
+          htmlFor={id}
+          className="mb-2 block text-sm font-medium text-slate-700"
+        >
+          {label}
 
-    return (
-        <div className="w-full">
+          {required && <span className="ml-1 text-red-500">*</span>}
+        </label>
+      )}
 
-            {label && (
-                <label
-                    htmlFor={id}
-                    className="mb-2 block text-sm font-medium text-slate-700"
-                >
-                    {label}
+      <div className="relative">
+        {startIcon && (
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+            {startIcon}
+          </div>
+        )}
 
-                    {required && (
-                        <span className="ml-1 text-red-500">*</span>
-                    )}
-                </label>
-            )}
-
-            <div className="relative">
-
-                {startIcon && (
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
-                        {startIcon}
-                    </div>
-                )}
-
-                <input
-                    id={id}
-                    ref={reference}
-                    type={type}
-                    placeholder={placeholder}
-                    disabled={disabled}
-                    required={required}
-                    autoComplete={autoComplete}
-                    aria-invalid={!!error}
-                    aria-describedby={error ? `${id}-error` : undefined}
-                    className={`
+        <input
+          id={id}
+          ref={reference}
+          type={type}
+          placeholder={placeholder}
+          disabled={disabled}
+          required={required}
+          autoComplete={autoComplete}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${id}-error` : undefined}
+          className={`
                         w-full
                         rounded-xl
                         border
@@ -82,35 +77,31 @@ export function Input({
                         disabled:bg-slate-100
                         disabled:opacity-60
 
-                        ${startIcon ? "pl-12" : ""}
-                        ${endIcon ? "pr-12" : ""}
+                        ${startIcon ? 'pl-12' : ''}
+                        ${endIcon ? 'pr-12' : ''}
 
-                        ${error
-                            ? "border-red-500 focus:ring-4 focus:ring-red-100"
-                            : "border-slate-300 hover:border-slate-400 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100"
+                        ${
+                          error
+                            ? 'border-red-500 focus:ring-4 focus:ring-red-100'
+                            : 'border-slate-300 hover:border-slate-400 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100'
                         }
 
-                        ${className || ""}
+                        ${className || ''}
                     `}
-                />
+        />
 
-                {endIcon && (
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400">
-                        {endIcon}
-                    </div>
-                )}
+        {endIcon && (
+          <div className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400">
+            {endIcon}
+          </div>
+        )}
+      </div>
 
-            </div>
-
-            {error && (
-                <p
-                    id={`${id}-error`}
-                    className="mt-1.5 text-xs text-red-500"
-                >
-                    {error}
-                </p>
-            )}
-
-        </div>
-    );
+      {error && (
+        <p id={`${id}-error`} className="mt-1.5 text-xs text-red-500">
+          {error}
+        </p>
+      )}
+    </div>
+  );
 }

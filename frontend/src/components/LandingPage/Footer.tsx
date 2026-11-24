@@ -1,11 +1,10 @@
-import { Layers3 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Layers3 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
     <footer className="bg-slate-950 text-slate-400">
       <div className="mx-auto max-w-7xl px-6 pt-16 pb-8">
-
         <div className="grid gap-12 md:grid-cols-3">
           <div>
             <a href="#home" className="flex items-center gap-2">
@@ -19,29 +18,32 @@ const Footer = () => {
             </a>
 
             <p className="mt-5 max-w-sm text-sm leading-relaxed">
-              Intelligent support ticket triage and resource scheduling
-              designed for efficient, transparent and accountable
-              support operations.
+              Intelligent support ticket triage and resource scheduling designed
+              for efficient, transparent and accountable support operations.
             </p>
           </div>
 
           <div>
-            <h3 className="mb-5 font-semibold text-white">
-              Quick Links
-            </h3>
+            <h3 className="mb-5 font-semibold text-white">Quick Links</h3>
 
             <div className="flex flex-col gap-3 text-sm">
-              <a href="#home" className="hover:text-white">Home</a>
-              <a href="#features" className="hover:text-white">Features</a>
-              <a href="#about" className="hover:text-white">About</a>
-              <a href="#resources" className="hover:text-white">Resources</a>
+              <a href="#home" className="hover:text-white">
+                Home
+              </a>
+              <a href="#features" className="hover:text-white">
+                Features
+              </a>
+              <a href="#about" className="hover:text-white">
+                About
+              </a>
+              <a href="#resources" className="hover:text-white">
+                Resources
+              </a>
             </div>
           </div>
 
           <div>
-            <h3 className="mb-5 font-semibold text-white">
-              Account
-            </h3>
+            <h3 className="mb-5 font-semibold text-white">Account</h3>
 
             <div className="flex flex-col gap-3 text-sm">
               <Link to="/login" className="hover:text-white">

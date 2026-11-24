@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Layers3, Menu, X } from "lucide-react";
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Layers3, Menu, X } from 'lucide-react';
 
 const navLinks = [
-  { name: "Home", href: "#home" },
-  { name: "Features", href: "#features" },
-  { name: "About", href: "#about" },
-  { name: "Resources", href: "#resources" },
+  { name: 'Home', href: '#home' },
+  { name: 'Features', href: '#features' },
+  { name: 'About', href: '#about' },
+  { name: 'Resources', href: '#resources' },
 ];
 
 const Navbar = () => {
@@ -15,7 +15,6 @@ const Navbar = () => {
   return (
     <header className="fixed top-0 left-0 z-50 w-full border-b border-slate-200 bg-white/90 backdrop-blur-lg">
       <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-
         {/* Logo */}
         <a href="#home" className="flex items-center gap-2">
           <div className="rounded-xl bg-indigo-600 p-2 text-white">

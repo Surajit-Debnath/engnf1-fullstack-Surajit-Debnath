@@ -1,87 +1,92 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from 'react-router-dom';
 
-import LandingPage from "./Pages/LandingPage";
-import Login from "./Pages/Login";
-import Register from "./Pages/Register";
-import Dashboard from "./Pages/Dashboard";
+import LandingPage from './pages/LandingPage';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
-import ProtectedRoute from "./components/ProtectedRoute";
-import DashboardLayout from "./components/layouts/DashboardLayout";
+import Dashboard from './pages/Dashboard';
+import Tickets from './pages/Tickets';
+
+import AdminDashboard from './pages/admin/AdminDashboard';
+
+import DashboardLayout from './components/layouts/DashboardLayout';
+
+import AdminDashboardLayout from './components/layouts/AdminDashboardLayout';
+
+import RoleProtectedRoute from './components/auth/RoleProtectedRoute';
 
 function ComingSoon({ title }: { title: string }) {
-    return (
-        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center">
+      <h1 className="text-3xl font-bold text-slate-900">{title}</h1>
 
-            <h2 className="text-2xl font-bold text-slate-900">
-                {title}
-            </h2>
-
-            <p className="mt-3 text-slate-500">
-                This module is under development.
-            </p>
-
-        </div>
-    );
+      <p className="mt-3 text-slate-500">This module is under development.</p>
+    </div>
+  );
 }
 
 export default function App() {
+  return (
+    <Routes>
+      {/* Public Routes */}
 
-    return (
-        <Routes>
+      <Route path="/" element={<LandingPage />} />
 
-            {/* Public Routes */}
+      <Route path="/login" element={<Login />} />
 
-            <Route path="/" element={<LandingPage />} />
+      <Route path="/register" element={<Register />} />
 
-            <Route path="/login" element={<Login />} />
+      {/* USER ROUTES */}
 
-            <Route path="/register" element={<Register />} />
+      <Route element={<RoleProtectedRoute allowedRoles={['USER']} />}>
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<Dashboard />} />
 
-            {/* Protected Dashboard Routes */}
+          <Route path="tickets" element={<Tickets />} />
 
-            <Route element={<ProtectedRoute />}>
+          <Route
+            path="tickets/:id"
+            element={<ComingSoon title="Ticket Details" />}
+          />
 
-                <Route
-                    path="/dashboard"
-                    element={<DashboardLayout />}
-                >
+          <Route path="triage" element={<ComingSoon title="Triage Queue" />} />
 
-                    <Route index element={<Dashboard />} />
+          <Route path="bookings" element={<ComingSoon title="My Bookings" />} />
 
-                    <Route
-                        path="tickets"
-                        element={<ComingSoon title="Tickets" />}
-                    />
+          <Route path="resources" element={<ComingSoon title="Resources" />} />
+        </Route>
+      </Route>
 
-                    <Route
-                        path="triage"
-                        element={<ComingSoon title="Triage Queue" />}
-                    />
+      {/* ADMIN ROUTES */}
 
-                    <Route
-                        path="bookings"
-                        element={<ComingSoon title="My Bookings" />}
-                    />
+      <Route element={<RoleProtectedRoute allowedRoles={['ADMIN']} />}>
+        <Route path="/admin/dashboard" element={<AdminDashboardLayout />}>
+          <Route index element={<AdminDashboard />} />
 
-                    <Route
-                        path="resources"
-                        element={<ComingSoon title="Resources" />}
-                    />
+          <Route path="tickets" element={<Tickets />} />
 
-                    <Route
-                        path="admin/resources"
-                        element={<ComingSoon title="Manage Resources" />}
-                    />
+          <Route
+            path="tickets/:id"
+            element={<ComingSoon title="Ticket Details" />}
+          />
 
-                    <Route
-                        path="admin/bookings"
-                        element={<ComingSoon title="Manage Bookings" />}
-                    />
+          <Route path="triage" element={<ComingSoon title="Triage Queue" />} />
 
-                </Route>
+          <Route
+            path="resources"
+            element={<ComingSoon title="Manage Resources" />}
+          />
 
-            </Route>
+          <Route
+            path="bookings"
+            element={<ComingSoon title="Manage Bookings" />}
+          />
+        </Route>
+      </Route>
 
-        </Routes>
-    );
+      {/* Unknown Routes */}
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
 }

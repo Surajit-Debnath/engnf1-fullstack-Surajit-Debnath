@@ -5,26 +5,26 @@ import {
   Ticket,
   CircleCheck,
   Ellipsis,
-} from "lucide-react";
+} from 'lucide-react';
 
 const tickets = [
   {
-    id: "TK-1024",
-    title: "Network connectivity issue",
-    priority: "High",
-    color: "bg-red-100 text-red-700",
+    id: 'TK-1024',
+    title: 'Network connectivity issue',
+    priority: 'High',
+    color: 'bg-red-100 text-red-700',
   },
   {
-    id: "TK-1025",
-    title: "Software installation",
-    priority: "Medium",
-    color: "bg-amber-100 text-amber-700",
+    id: 'TK-1025',
+    title: 'Software installation',
+    priority: 'Medium',
+    color: 'bg-amber-100 text-amber-700',
   },
   {
-    id: "TK-1026",
-    title: "Diagnostic lab access",
-    priority: "Low",
-    color: "bg-emerald-100 text-emerald-700",
+    id: 'TK-1026',
+    title: 'Diagnostic lab access',
+    priority: 'Low',
+    color: 'bg-emerald-100 text-emerald-700',
   },
 ];
 
@@ -35,7 +35,6 @@ const Hero = () => {
       className="relative overflow-hidden bg-linear-to-br from-indigo-50 via-white to-sky-50 pt-36 pb-24 lg:pt-48 lg:pb-32"
     >
       <div className="mx-auto grid max-w-7xl items-center gap-16 px-6 lg:grid-cols-2">
-
         {/* Left Content */}
         <div>
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700">
@@ -52,10 +51,9 @@ const Hero = () => {
 
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600">
             Streamline your support operations with automated ticket
-            classification, intelligent prioritization, human oversight
-            and conflict-free resource scheduling.
+            classification, intelligent prioritization, human oversight and
+            conflict-free resource scheduling.
           </p>
-
 
           <div className="mt-8 flex flex-wrap gap-5 text-sm text-slate-500">
             <span className="flex items-center gap-2">
@@ -73,15 +71,12 @@ const Hero = () => {
         {/* Dashboard Preview */}
         <div className="rounded-3xl border border-indigo-100 bg-indigo-100/40 p-4 shadow-2xl shadow-indigo-200/50">
           <div className="rounded-2xl border border-slate-200 bg-white p-6">
-
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-bold text-slate-900">
                   Support Overview
                 </h2>
-                <p className="text-sm text-slate-500">
-                  Your support workspace
-                </p>
+                <p className="text-sm text-slate-500">Your support workspace</p>
               </div>
 
               <Ellipsis className="text-slate-400" />
@@ -91,22 +86,14 @@ const Hero = () => {
             <div className="mb-8 grid grid-cols-2 gap-4">
               <div className="rounded-xl bg-indigo-50 p-4">
                 <Ticket className="mb-3 text-indigo-600" />
-                <p className="text-sm text-slate-500">
-                  Open Tickets
-                </p>
-                <h3 className="text-3xl font-bold text-indigo-700">
-                  128
-                </h3>
+                <p className="text-sm text-slate-500">Open Tickets</p>
+                <h3 className="text-3xl font-bold text-indigo-700">128</h3>
               </div>
 
               <div className="rounded-xl bg-emerald-50 p-4">
                 <CircleCheck className="mb-3 text-emerald-600" />
-                <p className="text-sm text-slate-500">
-                  Resolved Tickets
-                </p>
-                <h3 className="text-3xl font-bold text-emerald-700">
-                  96
-                </h3>
+                <p className="text-sm text-slate-500">Resolved Tickets</p>
+                <h3 className="text-3xl font-bold text-emerald-700">96</h3>
               </div>
             </div>
 
@@ -128,9 +115,7 @@ const Hero = () => {
                       <p className="text-sm font-medium text-slate-700">
                         {ticket.title}
                       </p>
-                      <p className="text-xs text-slate-400">
-                        {ticket.id}
-                      </p>
+                      <p className="text-xs text-slate-400">{ticket.id}</p>
                     </div>
                   </div>
 

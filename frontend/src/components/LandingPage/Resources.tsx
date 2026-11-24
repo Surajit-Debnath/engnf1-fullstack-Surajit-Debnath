@@ -1,24 +1,24 @@
-import { DoorOpen, FlaskConical, MonitorCog } from "lucide-react";
-import { Link } from "react-router-dom";
+import { DoorOpen, FlaskConical, MonitorCog } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const resources = [
   {
     icon: DoorOpen,
-    title: "Meeting Rooms",
+    title: 'Meeting Rooms',
     description:
-      "Reserve dedicated spaces for live troubleshooting, support discussions and collaborative problem-solving.",
+      'Reserve dedicated spaces for live troubleshooting, support discussions and collaborative problem-solving.',
   },
   {
     icon: FlaskConical,
-    title: "Technical Laboratories",
+    title: 'Technical Laboratories',
     description:
-      "Schedule access to testing environments and laboratories for technical investigations.",
+      'Schedule access to testing environments and laboratories for technical investigations.',
   },
   {
     icon: MonitorCog,
-    title: "Diagnostic Equipment",
+    title: 'Diagnostic Equipment',
     description:
-      "Book shared diagnostic tools and specialized equipment without overlapping reservations.",
+      'Book shared diagnostic tools and specialized equipment without overlapping reservations.',
   },
 ];
 
@@ -26,7 +26,6 @@ const Resources = () => {
   return (
     <section id="resources" className="bg-slate-50 py-24">
       <div className="mx-auto max-w-7xl px-6">
-
         <div className="mx-auto mb-14 max-w-2xl text-center">
           <span className="text-sm font-semibold tracking-widest text-indigo-600 uppercase">
             Resource Management
@@ -80,8 +79,8 @@ const Resources = () => {
           </h2>
 
           <p className="mx-auto mt-4 max-w-xl text-lg text-indigo-100">
-            Bring your support tickets, agents and shared resources
-            together with TriageSync.
+            Bring your support tickets, agents and shared resources together
+            with TriageSync.
           </p>
 
           <Link

@@ -5,44 +5,44 @@ import {
   History,
   CalendarClock,
   Settings,
-} from "lucide-react";
+} from 'lucide-react';
 
 const features = [
   {
     icon: BrainCircuit,
-    title: "Automated Ticket Triage",
+    title: 'Automated Ticket Triage',
     description:
-      "Automatically categorize incoming support tickets to reduce manual sorting and improve team efficiency.",
+      'Automatically categorize incoming support tickets to reduce manual sorting and improve team efficiency.',
   },
   {
     icon: ListFilter,
-    title: "Intelligent Prioritization",
+    title: 'Intelligent Prioritization',
     description:
-      "Identify critical issues and prioritize tickets based on urgency, impact and classification rules.",
+      'Identify critical issues and prioritize tickets based on urgency, impact and classification rules.',
   },
   {
     icon: ShieldCheck,
-    title: "Human Override Protection",
+    title: 'Human Override Protection',
     description:
-      "Empower support agents to review and override automated decisions without losing their manual changes.",
+      'Empower support agents to review and override automated decisions without losing their manual changes.',
   },
   {
     icon: History,
-    title: "Immutable Audit Trail",
+    title: 'Immutable Audit Trail',
     description:
-      "Maintain a transparent history of ticket updates, classification decisions and agent actions.",
+      'Maintain a transparent history of ticket updates, classification decisions and agent actions.',
   },
   {
     icon: CalendarClock,
-    title: "Resource Slot Scheduling",
+    title: 'Resource Slot Scheduling',
     description:
-      "Reserve rooms, laboratories and diagnostic equipment while preventing conflicting bookings.",
+      'Reserve rooms, laboratories and diagnostic equipment while preventing conflicting bookings.',
   },
   {
     icon: Settings,
-    title: "Administrator Controls",
+    title: 'Administrator Controls',
     description:
-      "Manage internal resources, configure availability and oversee support operations from one platform.",
+      'Manage internal resources, configure availability and oversee support operations from one platform.',
   },
 ];
 
@@ -50,7 +50,6 @@ const Features = () => {
   return (
     <section id="features" className="bg-slate-50 py-24">
       <div className="mx-auto max-w-7xl px-6">
-
         <div className="mx-auto mb-14 max-w-2xl text-center">
           <span className="text-sm font-semibold tracking-widest text-indigo-600 uppercase">
             Features
@@ -61,8 +60,8 @@ const Features = () => {
           </h2>
 
           <p className="mt-4 text-lg text-slate-600">
-            One unified platform for managing tickets, reviewing
-            decisions and scheduling shared resources.
+            One unified platform for managing tickets, reviewing decisions and
+            scheduling shared resources.
           </p>
         </div>
 

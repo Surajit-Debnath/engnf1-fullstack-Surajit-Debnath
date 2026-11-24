@@ -4,33 +4,33 @@ import {
   UserCheck,
   CalendarCheck,
   CheckCircle2,
-} from "lucide-react";
+} from 'lucide-react';
 
 const steps = [
   {
     icon: Inbox,
-    title: "Receive Tickets",
-    description: "Collect incoming support requests.",
+    title: 'Receive Tickets',
+    description: 'Collect incoming support requests.',
   },
   {
     icon: BrainCircuit,
-    title: "Automated Triage",
-    description: "Assign categories and priority levels.",
+    title: 'Automated Triage',
+    description: 'Assign categories and priority levels.',
   },
   {
     icon: UserCheck,
-    title: "Agent Review",
-    description: "Review and override automated decisions.",
+    title: 'Agent Review',
+    description: 'Review and override automated decisions.',
   },
   {
     icon: CalendarCheck,
-    title: "Schedule Resources",
-    description: "Book available time slots when required.",
+    title: 'Schedule Resources',
+    description: 'Book available time slots when required.',
   },
   {
     icon: CheckCircle2,
-    title: "Resolve Tickets",
-    description: "Complete requests with traceable history.",
+    title: 'Resolve Tickets',
+    description: 'Complete requests with traceable history.',
   },
 ];
 
@@ -38,7 +38,6 @@ const About = () => {
   return (
     <section id="about" className="bg-white py-24">
       <div className="mx-auto grid max-w-7xl items-center gap-16 px-6 lg:grid-cols-2">
-
         {/* About Content */}
         <div>
           <span className="text-sm font-semibold tracking-widest text-indigo-600 uppercase">
@@ -50,29 +49,26 @@ const About = () => {
           </h2>
 
           <p className="mt-6 text-lg leading-relaxed text-slate-600">
-            Support teams receive hundreds of requests every day.
-            Managing priorities, reviewing decisions and coordinating
-            shared resources manually can lead to delays and confusion.
+            Support teams receive hundreds of requests every day. Managing
+            priorities, reviewing decisions and coordinating shared resources
+            manually can lead to delays and confusion.
           </p>
 
           <p className="mt-4 text-lg leading-relaxed text-slate-600">
-            TriageSync connects automated ticket triage with
-            human-controlled decision-making and resource scheduling
-            in a single, organized workspace.
+            TriageSync connects automated ticket triage with human-controlled
+            decision-making and resource scheduling in a single, organized
+            workspace.
           </p>
 
           <div className="mt-8 space-y-4">
             {[
-              "Reduce repetitive manual ticket sorting",
-              "Keep support agents in control",
-              "Prevent resource scheduling conflicts",
-              "Maintain transparent and accountable operations",
+              'Reduce repetitive manual ticket sorting',
+              'Keep support agents in control',
+              'Prevent resource scheduling conflicts',
+              'Maintain transparent and accountable operations',
             ].map((item) => (
               <div key={item} className="flex items-center gap-3">
-                <CheckCircle2
-                  size={20}
-                  className="shrink-0 text-indigo-600"
-                />
+                <CheckCircle2 size={20} className="shrink-0 text-indigo-600" />
                 <span className="text-slate-700">{item}</span>
               </div>
             ))}
