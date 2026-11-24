@@ -11,11 +11,12 @@
     "test": "node src/index.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-     "seed": "node seeds/seed.js",
-     "test:booking-race": "node tests/booking-race.test.js"
+    "seed": "node seeds/seed.js",
+    "test:booking-race": "node tests/booking-race.test.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
     "dotenv": "^18.0.10",
     "express": "^5.3.0",
     "jsonwebtoken": "^9.0.3",

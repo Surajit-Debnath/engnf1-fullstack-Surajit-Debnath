@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require("cors");
 const PORT = process.env.PORT;
 const MONGODB_URL = process.env.MONGODB_URL;
 const { authRouter } = require('./routes/authRouter');
@@ -22,6 +23,7 @@ async function connect() {
 }
 connect();
 app.use(express.json());
+app.use(cors());
 app.get('/api/health', (req, res) => {
   res.json({ message: 'ok' });
 });
