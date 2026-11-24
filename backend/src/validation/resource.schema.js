@@ -33,9 +33,29 @@ const resourceQuerySchema = z.object({
   minCapacity: z.coerce.number().int().min(1).max(500).optional(),
   page: z.coerce.number().int().min(1).default(1),
 });
+const availabilityQuerySchema = z
+  .object({
+    from: z.string().datetime({
+      offset: false,
+      message: "from must be an ISO 8601 UTC timestamp",
+    }),
+
+    to: z.string().datetime({
+      offset: false,
+      message: "to must be an ISO 8601 UTC timestamp",
+    }),
+  })
+  .refine(
+    (data) => new Date(data.from) < new Date(data.to),
+    {
+      message: "from must be earlier than to",
+      path: ["to"],
+    }
+  );
 module.exports = {
   resourceTypeEnum,
   createResourceSchema,
   updateResourceSchema,
   resourceQuerySchema,
+  availabilityQuerySchema
 };
