@@ -160,5 +160,6 @@ module.exports = {
   myBookingsQuerySchema,
   adminBookingsQuerySchema,
   bookingParamsSchema,
-  rejectBookingSchema
+  rejectBookingSchema,
+  bookingStatuses
 };
