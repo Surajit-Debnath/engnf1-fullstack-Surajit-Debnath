@@ -7,8 +7,9 @@ const { authRouter } = require('./routes/authRouter');
 const { ticketRouter } = require('./routes/ticketRouter');
 const { statsRouter } = require('../src/routes/statsRouter');
 const {resourceRouter}=require("../src/routes/resourceRouter");
+const {bookingRouter}=require("../src/routes/bookingRouter");
+
 const { authMiddleware } = require('../src/middleware/authmiddleware');
-const authmiddleware = require('../src/middleware/authmiddleware');
 const app = express();
 
 async function connect() {
@@ -28,3 +29,4 @@ app.use('/api/auth', authRouter);
 app.use('/api/tickets', authMiddleware, ticketRouter);
 app.use('/api/stats', authMiddleware, statsRouter);
 app.use('/api/resources',resourceRouter);
+app.use('/api/bookings',bookingRouter);

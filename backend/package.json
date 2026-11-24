@@ -11,7 +11,8 @@
     "test": "node src/index.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-     "seed": "node seeds/seed.js"
+     "seed": "node seeds/seed.js",
+     "test:booking-race": "node tests/booking-race.test.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

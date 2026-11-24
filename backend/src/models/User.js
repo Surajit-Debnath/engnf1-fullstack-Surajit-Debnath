@@ -27,6 +27,11 @@ const userSchema = new mongoose.Schema(
       enum: ['USER', 'ADMIN'],
       default: 'USER',
     },
+    bookingLockVersion: {
+     type: Number,
+     default: 0,
+     select: false,
+    },
   },
   {
     timestamps: {
