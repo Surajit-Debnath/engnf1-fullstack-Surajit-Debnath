@@ -1,5 +1,5 @@
-const { importTicketsSchema } = require("../validation/ticket.schema");
-const { importTickets } = require("../services/ticketImport.service");
+const { importTicketsSchema } = require('../validation/ticket.schema');
+const { importTickets } = require('../services/ticketImport.service');
 
 async function importTicketsController(req, res) {
   try {
@@ -7,7 +7,7 @@ async function importTicketsController(req, res) {
 
     if (!validation.success) {
       return res.status(400).json({
-        message: "Invalid ticket import data",
+        message: 'Invalid ticket import data',
         errors: validation.error.issues,
       });
     }
@@ -16,10 +16,10 @@ async function importTicketsController(req, res) {
 
     return res.status(200).json(result);
   } catch (error) {
-    console.error("Ticket import error:", error);
+    console.error('Ticket import error:', error);
 
     return res.status(500).json({
-      message: "Internal Server Error",
+      message: 'Internal Server Error',
     });
   }
 }

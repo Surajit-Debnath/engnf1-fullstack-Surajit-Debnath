@@ -1,6 +1,5 @@
-
-const Ticket = require("../models/Ticket");
-const { classifyTicket } = require("../utils/ticketClassifier");
+const Ticket = require('../models/Ticket');
+const { classifyTicket } = require('../utils/ticketClassifier');
 
 async function processExistingTicket(ticket, input) {
   let changed = false;
@@ -14,10 +13,7 @@ async function processExistingTicket(ticket, input) {
   }
 
   if (!ticket.isHumanOverride) {
-    const classification = classifyTicket(
-      input.subject,
-      input.body
-    );
+    const classification = classifyTicket(input.subject, input.body);
 
     if (ticket.autoCategory !== classification.autoCategory) {
       ticket.autoCategory = classification.autoCategory;
@@ -56,10 +52,7 @@ async function importTickets(tickets) {
     });
 
     if (existingTicket) {
-      const result = await processExistingTicket(
-        existingTicket,
-        input
-      );
+      const result = await processExistingTicket(existingTicket, input);
 
       if (result.changed) {
         updatedCount++;
@@ -72,10 +65,7 @@ async function importTickets(tickets) {
       continue;
     }
 
-    const classification = classifyTicket(
-      input.subject,
-      input.body
-    );
+    const classification = classifyTicket(input.subject, input.body);
 
     try {
       await Ticket.create({
@@ -85,7 +75,7 @@ async function importTickets(tickets) {
         autoCategory: classification.autoCategory,
         category: classification.autoCategory,
         priority: classification.priority,
-        status: "OPEN",
+        status: 'OPEN',
         isHumanOverride: false,
         isReviewed: false,
         assigneeId: null,
@@ -107,10 +97,7 @@ async function importTickets(tickets) {
         throw error;
       }
 
-      const result = await processExistingTicket(
-        existingTicket,
-        input
-      );
+      const result = await processExistingTicket(existingTicket, input);
 
       if (result.changed) {
         updatedCount++;

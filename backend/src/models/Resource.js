@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const resourceSchema = new mongoose.Schema(
   {
@@ -11,7 +11,7 @@ const resourceSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["ROOM", "LAB", "EQUIPMENT"],
+      enum: ['ROOM', 'LAB', 'EQUIPMENT'],
       required: true,
     },
 
@@ -36,6 +36,6 @@ const resourceSchema = new mongoose.Schema(
   }
 );
 
-const Resource = mongoose.model("Resource", resourceSchema);
+const Resource = mongoose.model('Resource', resourceSchema);
 
-module.exports=Resource;
+module.exports = Resource;

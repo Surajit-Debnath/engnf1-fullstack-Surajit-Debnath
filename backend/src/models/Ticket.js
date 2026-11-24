@@ -1,5 +1,4 @@
-
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const ticketSchema = new mongoose.Schema(
   {
@@ -25,26 +24,14 @@ const ticketSchema = new mongoose.Schema(
     // Never change this after the ticket is created.
     autoCategory: {
       type: String,
-      enum: [
-        "BILLING",
-        "BUG",
-        "FEATURE_REQUEST",
-        "LOGIN",
-        "DELIVERY",
-      ],
+      enum: ['BILLING', 'BUG', 'FEATURE_REQUEST', 'LOGIN', 'DELIVERY'],
       required: true,
     },
 
     // Current category. An agent can manually change this.
     category: {
       type: String,
-      enum: [
-        "BILLING",
-        "BUG",
-        "FEATURE_REQUEST",
-        "LOGIN",
-        "DELIVERY",
-      ],
+      enum: ['BILLING', 'BUG', 'FEATURE_REQUEST', 'LOGIN', 'DELIVERY'],
       required: true,
     },
 
@@ -55,19 +42,19 @@ const ticketSchema = new mongoose.Schema(
 
     priority: {
       type: String,
-      enum: ["LOW", "MEDIUM", "HIGH", "URGENT"],
-      default: "MEDIUM",
+      enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'],
+      default: 'MEDIUM',
     },
 
     status: {
       type: String,
-      enum: ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"],
-      default: "OPEN",
+      enum: ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'],
+      default: 'OPEN',
     },
 
     assigneeId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
       default: null,
     },
 
@@ -90,6 +77,6 @@ ticketSchema.index({ assigneeId: 1 });
 // Useful for sorting/filtering by creation time.
 ticketSchema.index({ createdAt: -1 });
 
-const Ticket = mongoose.model("Ticket", ticketSchema);
+const Ticket = mongoose.model('Ticket', ticketSchema);
 
-module.exports=Ticket;
+module.exports = Ticket;

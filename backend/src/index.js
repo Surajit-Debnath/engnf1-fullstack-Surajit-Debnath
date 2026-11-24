@@ -3,10 +3,12 @@ const express = require('express');
 const mongoose = require('mongoose');
 const PORT = process.env.PORT;
 const MONGODB_URL = process.env.MONGODB_URL;
-const {authRouter}=require("./routes/authRouter");
-const {ticketRouter}=require("./routes/ticketRouter");
-const {statsRouter}=require("../src/routes/statsRouter");
-const {authMiddleware}=require("../src/middleware/authmiddleware");
+const { authRouter } = require('./routes/authRouter');
+const { ticketRouter } = require('./routes/ticketRouter');
+const { statsRouter } = require('../src/routes/statsRouter');
+const {resourceRouter}=require("../src/routes/resourceRouter");
+const { authMiddleware } = require('../src/middleware/authmiddleware');
+const authmiddleware = require('../src/middleware/authmiddleware');
 const app = express();
 
 async function connect() {
@@ -18,11 +20,11 @@ async function connect() {
 }
 connect();
 app.use(express.json());
-app.get("/api/health",(req,res)=>{
-    res.json({"message":"ok"})
+app.get('/api/health', (req, res) => {
+  res.json({ message: 'ok' });
 });
 
-
-app.use("/api/auth",authRouter);
-app.use("/api/tickets",authMiddleware,ticketRouter);
-app.use("/api/stats", authMiddleware,statsRouter );
+app.use('/api/auth', authRouter);
+app.use('/api/tickets', authMiddleware, ticketRouter);
+app.use('/api/stats', authMiddleware, statsRouter);
+app.use('/api/resources',resourceRouter);

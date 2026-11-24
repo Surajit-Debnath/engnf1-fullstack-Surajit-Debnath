@@ -1,20 +1,17 @@
 require('dotenv').config();
-const { Router } = require("express");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
-const {authMiddleware}=require("../middleware/authmiddleware")
-const User = require("../models/User");
-const {
-  registerSchema,
-  loginSchema,
-} = require("../validation/auth.schema");
+const { Router } = require('express');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const { authMiddleware } = require('../middleware/authmiddleware');
+const User = require('../models/User');
+const { registerSchema, loginSchema } = require('../validation/auth.schema');
 
 const authRouter = Router();
 
 const JWT_SECRET = process.env.JWT_AUTH_PASSWORD;
 
 if (!JWT_SECRET) {
-  throw new Error("JWT_AUTH_PASSWORD is missing from environment variables");
+  throw new Error('JWT_AUTH_PASSWORD is missing from environment variables');
 }
 
 // Remove sensitive fields before returning a user.
@@ -27,13 +24,13 @@ const sanitizeUser = (user) => ({
 });
 
 // Register
-authRouter.post("/register", async (req, res) => {
+authRouter.post('/register', async (req, res) => {
   try {
     const validation = registerSchema.safeParse(req.body);
 
     if (!validation.success) {
       return res.status(400).json({
-        message: "Invalid input",
+        message: 'Invalid input',
         errors: validation.error.issues,
       });
     }
@@ -44,7 +41,7 @@ authRouter.post("/register", async (req, res) => {
 
     if (existingUser) {
       return res.status(409).json({
-        message: "Email already exists",
+        message: 'Email already exists',
       });
     }
 
@@ -54,37 +51,37 @@ authRouter.post("/register", async (req, res) => {
       name,
       email,
       passwordHash,
-      role: "USER",
+      role: 'USER',
     });
 
     return res.status(201).json({
-      message: "Registration successful",
+      message: 'Registration successful',
       user: sanitizeUser(user),
     });
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error('Registration error:', error);
 
     // Handles duplicate-key errors, including concurrent registrations.
     if (error.code === 11000) {
       return res.status(409).json({
-        message: "Email already exists",
+        message: 'Email already exists',
       });
     }
 
     return res.status(500).json({
-      message: "Internal Server Error",
+      message: 'Internal Server Error',
     });
   }
 });
 
 // Login
-authRouter.post("/login", async (req, res) => {
+authRouter.post('/login', async (req, res) => {
   try {
     const validation = loginSchema.safeParse(req.body);
 
     if (!validation.success) {
       return res.status(400).json({
-        message: "Invalid input",
+        message: 'Invalid input',
         errors: validation.error.issues,
       });
     }
@@ -92,22 +89,19 @@ authRouter.post("/login", async (req, res) => {
     const { email, password } = validation.data;
 
     // Explicitly select passwordHash if your model uses select: false.
-    const user = await User.findOne({ email }).select("+passwordHash");
+    const user = await User.findOne({ email }).select('+passwordHash');
 
     if (!user) {
       return res.status(401).json({
-        message: "Invalid email or password",
+        message: 'Invalid email or password',
       });
     }
 
-    const passwordMatch = await bcrypt.compare(
-      password,
-      user.passwordHash
-    );
+    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
 
     if (!passwordMatch) {
       return res.status(401).json({
-        message: "Invalid email or password",
+        message: 'Invalid email or password',
       });
     }
 
@@ -118,44 +112,43 @@ authRouter.post("/login", async (req, res) => {
       },
       JWT_SECRET,
       {
-        expiresIn: "24h",
+        expiresIn: '24h',
       }
     );
 
     return res.status(200).json({
-      message: "Login successful",
+      message: 'Login successful',
       token,
       user: sanitizeUser(user),
     });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error('Login error:', error);
 
     return res.status(500).json({
-      message: "Internal Server Error",
+      message: 'Internal Server Error',
     });
   }
 });
 
-authRouter.get("/me",authMiddleware,async(req,res)=>{
-    try{
-        const userId=req.userId.id;
-        const resp=await User.find({_id:userId});
-        if(!resp){
-            return res.status(401).json({
-                message:"Not signed in "
-            })
-        }
-        res.json({
-          resp
-        })
+authRouter.get('/me', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.userId.id;
+    const resp = await User.find({ _id: userId });
+    if (!resp) {
+      return res.status(401).json({
+        message: 'Not signed in ',
+      });
     }
-    catch(error){
-        console.log(error);
-        return res.status(500).json({
-            message:"Internal Server Error"
-        });
-    }
-})
+    res.json({
+      resp,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: 'Internal Server Error',
+    });
+  }
+});
 module.exports = {
-  authRouter:authRouter,
+  authRouter: authRouter,
 };

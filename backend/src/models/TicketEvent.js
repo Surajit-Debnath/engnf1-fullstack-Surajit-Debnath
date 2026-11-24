@@ -1,16 +1,16 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const ticketEventSchema = new mongoose.Schema(
   {
     ticketId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Ticket",
+      ref: 'Ticket',
       required: true,
     },
 
     field: {
       type: String,
-      enum: ["category", "priority", "status", "assigneeId"],
+      enum: ['category', 'priority', 'status', 'assigneeId'],
       required: true,
     },
 
@@ -27,7 +27,7 @@ const ticketEventSchema = new mongoose.Schema(
     actor: {
       type: String,
       required: true,
-      trim:true,
+      trim: true,
     },
   },
   {
@@ -37,6 +37,6 @@ const ticketEventSchema = new mongoose.Schema(
 
 ticketEventSchema.index({ ticketId: 1, createdAt: -1 });
 
-const TicketEvent = mongoose.model("TicketEvent", ticketEventSchema);
+const TicketEvent = mongoose.model('TicketEvent', ticketEventSchema);
 
-module.exports=TicketEvent;
+module.exports = TicketEvent;

@@ -1,23 +1,27 @@
-const TicketEvent = require("../models/TicketEvent");
-const User = require("../models/User");
+const TicketEvent = require('../models/TicketEvent');
+const User = require('../models/User');
 
 async function updateTicket(ticket, updates, actor) {
   const events = [];
   if (
-    Object.prototype.hasOwnProperty.call(updates, "assigneeId") &&
+    Object.prototype.hasOwnProperty.call(updates, 'assigneeId') &&
     updates.assigneeId !== null
   ) {
     const assignee = await User.findById(updates.assigneeId);
 
     if (!assignee) {
       return {
-        error: "ASSIGNEE_NOT_FOUND",
+        error: 'ASSIGNEE_NOT_FOUND',
       };
     }
   }
-  const categoryChanged = updates.category !== undefined && updates.category !== ticket.category;
-  const statusChangedFromOpen =updates.status !== undefined && ticket.status === "OPEN" && updates.status !== "OPEN";
-  const fields = ["category", "priority", "status", "assigneeId"];
+  const categoryChanged =
+    updates.category !== undefined && updates.category !== ticket.category;
+  const statusChangedFromOpen =
+    updates.status !== undefined &&
+    ticket.status === 'OPEN' &&
+    updates.status !== 'OPEN';
+  const fields = ['category', 'priority', 'status', 'assigneeId'];
 
   for (const field of fields) {
     if (!Object.prototype.hasOwnProperty.call(updates, field)) {
@@ -28,14 +32,10 @@ async function updateTicket(ticket, updates, actor) {
     const newValue = updates[field];
 
     const oldComparable =
-      oldValue === null || oldValue === undefined
-        ? null
-        : String(oldValue);
+      oldValue === null || oldValue === undefined ? null : String(oldValue);
 
     const newComparable =
-      newValue === null || newValue === undefined
-        ? null
-        : String(newValue);
+      newValue === null || newValue === undefined ? null : String(newValue);
 
     if (oldComparable === newComparable) {
       continue;
