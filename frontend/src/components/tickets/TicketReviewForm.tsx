@@ -114,6 +114,11 @@ export default function TicketReviewForm({
     // REVIEW RULES
     // ==========================================
 
+    const statusChangedFromOpen =
+        ticket.status === "OPEN" && status !== "OPEN";
+
+    const canCompleteReview = categoryChanged || statusChangedFromOpen;
+
     const willHaveHumanOverride =
         ticket.isHumanOverride || categoryChanged;
 
@@ -146,7 +151,7 @@ export default function TicketReviewForm({
 
         event.preventDefault();
 
-        if (loading || ticket.isReviewed) return;
+        if (loading || ticket.isReviewed || !canCompleteReview) return;
 
         setError("");
 
@@ -180,8 +185,11 @@ export default function TicketReviewForm({
 
         // Prepare PATCH payload
 
-        // Explicit category submission confirms the classification.
-        const updates: UpdateTicketPayload = { category };
+        const updates: UpdateTicketPayload = {};
+
+        if (categoryChanged) {
+            updates.category = category;
+        }
 
         if (priorityChanged) {
 
@@ -359,10 +367,10 @@ export default function TicketReviewForm({
                             <p className="mt-2 text-xs leading-relaxed text-indigo-600">
 
                                 Verify the automated category and priority.
-                                If the category is correct, click Save Review
-                                without changing it. Otherwise, select the correct
-                                category. The ticket status will remain unchanged
-                                unless you choose a different status.
+                                To complete the review, change the category or
+                                transition the status from Open to another status.
+                                Changing only priority or assignee does not
+                                complete the review.
 
                             </p>
 
@@ -694,10 +702,16 @@ export default function TicketReviewForm({
                             </span>
 
                             <span
-                                className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700"
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                    ticket.isReviewed || canCompleteReview
+                                        ? "bg-emerald-100 text-emerald-700"
+                                        : "bg-amber-100 text-amber-700"
+                                }`}
                             >
 
-                                Reviewed
+                                {ticket.isReviewed || canCompleteReview
+                                    ? "Reviewed"
+                                    : "Awaiting Review"}
 
                             </span>
 
@@ -761,7 +775,7 @@ export default function TicketReviewForm({
 
                 {/* Review Completion Feedback */}
 
-                {!ticket.isReviewed && (
+                {!ticket.isReviewed && canCompleteReview && (
 
                     <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
 
@@ -793,6 +807,21 @@ export default function TicketReviewForm({
                 )}
 
 
+                {!ticket.isReviewed && !canCompleteReview && (
+                    <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                        <Info size={20} className="shrink-0 text-amber-600" />
+                        <div>
+                            <p className="text-sm font-semibold text-amber-700">
+                                Review Action Required
+                            </p>
+                            <p className="mt-1 text-xs leading-relaxed text-amber-600">
+                                Change the category or transition the status from
+                                Open to enable Save Review.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Form Actions */}
 
                 <div className="flex flex-wrap gap-3 border-t border-slate-200 pt-5">
@@ -816,7 +845,7 @@ export default function TicketReviewForm({
                             endIcon={<ArrowRight size={16} />}
                             loading={loading}
                             disabled={
-                                !user?.email || loading || ticket.isReviewed
+                                !user?.email || loading || ticket.isReviewed || !canCompleteReview
                             }
                             className="flex-1"
                         />

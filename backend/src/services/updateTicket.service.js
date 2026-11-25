@@ -4,6 +4,7 @@ const User = require('../models/User');
 async function updateTicket(ticket, updates, actor) {
   const events = [];
 
+  // Validate assignee.
   if (
     Object.prototype.hasOwnProperty.call(updates, 'assigneeId') &&
     updates.assigneeId !== null
@@ -17,18 +18,27 @@ async function updateTicket(ticket, updates, actor) {
     }
   }
 
+  // Detect category change.
   const categoryProvided = updates.category !== undefined;
 
   const categoryChanged =
-    categoryProvided && updates.category !== ticket.category;
+    categoryProvided &&
+    updates.category !== ticket.category;
 
+  // Detect status transition away from OPEN.
   const statusChangedFromOpen =
     updates.status !== undefined &&
     ticket.status === 'OPEN' &&
     updates.status !== 'OPEN';
 
-  const fields = ['category', 'priority', 'status', 'assigneeId'];
+  const fields = [
+    'category',
+    'priority',
+    'status',
+    'assigneeId',
+  ];
 
+  // Update fields and generate audit events.
   for (const field of fields) {
     if (!Object.prototype.hasOwnProperty.call(updates, field)) {
       continue;
@@ -62,18 +72,19 @@ async function updateTicket(ticket, updates, actor) {
     ticket[field] = newValue;
   }
 
-  // Activate human override only if the category changes.
+  // Protect manually changed categories from reclassification.
   if (categoryChanged) {
     ticket.isHumanOverride = true;
   }
 
-  // Mark as reviewed even if the submitted category is unchanged.
-  if (categoryProvided || statusChangedFromOpen) {
+  // Mark as reviewed only when a qualifying change occurs.
+  if (categoryChanged || statusChangedFromOpen) {
     ticket.isReviewed = true;
   }
 
   await ticket.save();
 
+  // Store audit events.
   if (events.length > 0) {
     await TicketEvent.insertMany(events);
   }
