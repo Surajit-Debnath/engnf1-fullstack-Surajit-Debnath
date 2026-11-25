@@ -6,6 +6,9 @@ import type {
   TicketQuery,
   ImportTicket,
   ImportTicketResponse,
+  TicketDetailsResponse,
+    UpdateTicketPayload,
+    UpdateTicketResponse
 } from '../types/ticket';
 
 export async function getTickets(query: TicketQuery, signal?: AbortSignal) {
@@ -30,4 +33,35 @@ export async function importTickets(tickets: ImportTicket[]) {
   });
 
   return response.data;
+}
+
+
+export async function getTicketDetails(
+    id: string,
+    signal?: AbortSignal
+) {
+    const response = await api.get<TicketDetailsResponse>(
+        `/tickets/${id}`,
+        { signal }
+    );
+
+    return response.data;
+}
+
+export async function updateTicket(
+    id: string,
+    updates: UpdateTicketPayload,
+    actor: string
+) {
+    const response = await api.patch<UpdateTicketResponse>(
+        `/tickets/${id}`,
+        updates,
+        {
+            headers: {
+                "X-Agent": actor
+            }
+        }
+    );
+
+    return response.data;
 }

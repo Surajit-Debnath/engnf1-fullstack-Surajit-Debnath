@@ -28,6 +28,8 @@ export interface Ticket {
   isReviewed: boolean;
   isHumanOverride: boolean;
   createdAt: string;
+  assigneeId: string | null;
+  updatedAt: string;
 }
 
 export interface TicketStats {

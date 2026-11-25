@@ -1,5 +1,38 @@
 import type { TicketCategory, TicketPriority, TicketStatus } from './dashboard';
+import type { Ticket } from "./dashboard";
 
+export type TicketEventField =
+    | "category"
+    | "priority"
+    | "status"
+    | "assigneeId";
+
+export interface TicketEvent {
+    _id: string;
+    ticketId: string;
+    field: TicketEventField;
+    oldValue: string | null;
+    newValue: string | null;
+    actor: string;
+    createdAt: string;
+}
+
+export interface TicketDetailsResponse {
+    ticket: Ticket;
+    events: TicketEvent[];
+}
+
+export interface UpdateTicketPayload {
+    category?: TicketCategory;
+    priority?: TicketPriority;
+    status?: TicketStatus;
+    assigneeId?: string | null;
+}
+
+export interface UpdateTicketResponse {
+    ticket: Ticket;
+    events: Omit<TicketEvent, "_id" | "createdAt">[];
+}
 export interface TicketFilters {
   q: string;
   category: TicketCategory | '';

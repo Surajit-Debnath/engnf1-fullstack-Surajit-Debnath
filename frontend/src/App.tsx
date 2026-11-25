@@ -1,20 +1,15 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
-
 import Dashboard from './pages/Dashboard';
 import Tickets from './pages/Tickets';
-
 import AdminDashboard from './pages/admin/AdminDashboard';
-
 import DashboardLayout from './components/layouts/DashboardLayout';
-
 import AdminDashboardLayout from './components/layouts/AdminDashboardLayout';
-
 import RoleProtectedRoute from './components/auth/RoleProtectedRoute';
-
+import TicketDetails from "./pages/TicketDetails";
+import TriageQueue from "./pages/TriageQueue";
 function ComingSoon({ title }: { title: string }) {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center">
@@ -46,10 +41,10 @@ export default function App() {
 
           <Route
             path="tickets/:id"
-            element={<ComingSoon title="Ticket Details" />}
+            element={<TicketDetails />}
           />
 
-          <Route path="triage" element={<ComingSoon title="Triage Queue" />} />
+          <Route path="triage" element={<TriageQueue/>} />
 
           <Route path="bookings" element={<ComingSoon title="My Bookings" />} />
 
@@ -67,10 +62,10 @@ export default function App() {
 
           <Route
             path="tickets/:id"
-            element={<ComingSoon title="Ticket Details" />}
+            element={<TicketDetails />}
           />
 
-          <Route path="triage" element={<ComingSoon title="Triage Queue" />} />
+          <Route path="triage" element={<TriageQueue />} />
 
           <Route
             path="resources"
