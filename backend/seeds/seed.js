@@ -80,11 +80,12 @@ const resources = [
 // --------------------------------------------------
 
 const tickets = [
-  // BILLING
+  // ==================== BILLING ====================
+
   {
     externalId: "SEED-001",
-    subject: "Refund request for duplicate payment",
-    body: "I was charged twice and need a refund.",
+    subject: "Duplicate payment deducted from bank account",
+    body: "My subscription payment was deducted twice. Please refund the additional amount.",
     autoCategory: "BILLING",
     category: "BILLING",
     priority: "HIGH",
@@ -92,8 +93,8 @@ const tickets = [
   },
   {
     externalId: "SEED-002",
-    subject: "Invoice not generated",
-    body: "Please generate my missing invoice.",
+    subject: "Monthly invoice unavailable",
+    body: "I cannot download the invoice for my latest subscription payment.",
     autoCategory: "BILLING",
     category: "BILLING",
     priority: "MEDIUM",
@@ -101,28 +102,29 @@ const tickets = [
   },
   {
     externalId: "SEED-003",
-    subject: "Urgent payment issue",
-    body: "Urgent! Production down because payment processing is failing.",
+    subject: "Payment gateway failure affecting all customers",
+    body: "Urgent! Customers cannot complete payments and production transactions are failing.",
     autoCategory: "BILLING",
     category: "BILLING",
     priority: "URGENT",
-    status: "IN_PROGRESS",
+    status: "OPEN",
   },
   {
     externalId: "SEED-004",
-    subject: "Incorrect charge on account",
-    body: "There is an incorrect charge on my account.",
+    subject: "Incorrect billing address on receipt",
+    body: "Please update the billing address displayed on my payment receipt.",
     autoCategory: "BILLING",
     category: "BILLING",
     priority: "LOW",
-    status: "RESOLVED",
+    status: "OPEN",
   },
 
-  // BUG
+  // ==================== BUG ====================
+
   {
     externalId: "SEED-005",
-    subject: "Application crashes on login",
-    body: "The application crashes with an exception.",
+    subject: "Application crashes while uploading documents",
+    body: "The application crashes whenever I upload a PDF document larger than 5 MB.",
     autoCategory: "BUG",
     category: "BUG",
     priority: "HIGH",
@@ -130,17 +132,17 @@ const tickets = [
   },
   {
     externalId: "SEED-006",
-    subject: "Server returns 500 error",
-    body: "The API returns a 500 error.",
+    subject: "Internal server error while saving profile",
+    body: "The profile update API returns a 500 error whenever I save my personal information.",
     autoCategory: "BUG",
     category: "BUG",
     priority: "HIGH",
-    status: "IN_PROGRESS",
+    status: "OPEN",
   },
   {
     externalId: "SEED-007",
-    subject: "Broken dashboard",
-    body: "The dashboard is broken after the latest update.",
+    subject: "Dashboard charts display incorrect values",
+    body: "The dashboard analytics chart shows incorrect totals after changing the date filter.",
     autoCategory: "BUG",
     category: "BUG",
     priority: "MEDIUM",
@@ -148,19 +150,20 @@ const tickets = [
   },
   {
     externalId: "SEED-008",
-    subject: "Production down due to application error",
-    body: "Urgent production down issue. The application is broken.",
+    subject: "Production application completely unavailable",
+    body: "Urgent! Production is down and all users are receiving application errors.",
     autoCategory: "BUG",
     category: "BUG",
     priority: "URGENT",
-    status: "IN_PROGRESS",
+    status: "OPEN",
   },
 
-  // FEATURE REQUEST
+  // ==================== FEATURE REQUEST ====================
+
   {
     externalId: "SEED-009",
-    subject: "Add dark mode",
-    body: "Please add a dark mode option to the dashboard.",
+    subject: "Introduce dark mode",
+    body: "Please add a dark mode option to improve readability during nighttime usage.",
     autoCategory: "FEATURE_REQUEST",
     category: "FEATURE_REQUEST",
     priority: "LOW",
@@ -168,8 +171,8 @@ const tickets = [
   },
   {
     externalId: "SEED-010",
-    subject: "Export reports feature",
-    body: "I would like to export reports as PDF files.",
+    subject: "Export reports in CSV format",
+    body: "I would like a feature to export monthly reports as CSV files for further analysis.",
     autoCategory: "FEATURE_REQUEST",
     category: "FEATURE_REQUEST",
     priority: "MEDIUM",
@@ -177,28 +180,29 @@ const tickets = [
   },
   {
     externalId: "SEED-011",
-    subject: "Add dashboard analytics",
-    body: "Please add more analytics to the dashboard.",
+    subject: "Introduce bulk ticket assignment",
+    body: "Please add a feature that allows administrators to assign multiple tickets to an agent simultaneously.",
     autoCategory: "FEATURE_REQUEST",
     category: "FEATURE_REQUEST",
     priority: "HIGH",
-    status: "RESOLVED",
+    status: "OPEN",
   },
   {
     externalId: "SEED-012",
-    subject: "Add keyboard shortcuts",
-    body: "It would be useful to have keyboard shortcuts.",
+    subject: "Custom keyboard shortcuts",
+    body: "It would be helpful to have configurable keyboard shortcuts for frequently used actions.",
     autoCategory: "FEATURE_REQUEST",
     category: "FEATURE_REQUEST",
-    priority: "MEDIUM",
-    status: "CLOSED",
+    priority: "LOW",
+    status: "OPEN",
   },
 
-  // LOGIN
+  // ==================== LOGIN ====================
+
   {
     externalId: "SEED-013",
-    subject: "Password reset not working",
-    body: "I cannot reset my password.",
+    subject: "Password reset email not received",
+    body: "I requested a password reset several times but have not received the reset email.",
     autoCategory: "LOGIN",
     category: "LOGIN",
     priority: "MEDIUM",
@@ -206,28 +210,29 @@ const tickets = [
   },
   {
     externalId: "SEED-014",
-    subject: "Account locked out",
-    body: "I am locked out of my account.",
+    subject: "Multiple employees locked out of accounts",
+    body: "Urgent! Our entire support team is unable to log in because their accounts are locked.",
     autoCategory: "LOGIN",
     category: "LOGIN",
     priority: "URGENT",
-    status: "IN_PROGRESS",
+    status: "OPEN",
   },
   {
     externalId: "SEED-015",
-    subject: "Two factor authentication problem",
-    body: "My 2FA verification is failing.",
+    subject: "Two-factor authentication code rejected",
+    body: "The login system rejects valid two-factor authentication codes generated by my authenticator.",
     autoCategory: "LOGIN",
     category: "LOGIN",
     priority: "HIGH",
     status: "OPEN",
   },
 
-  // DELIVERY
+  // ==================== DELIVERY ====================
+
   {
     externalId: "SEED-016",
-    subject: "Package has not arrived",
-    body: "My package has not arrived yet.",
+    subject: "Order not delivered within estimated date",
+    body: "My package has not arrived even though the expected delivery date has passed.",
     autoCategory: "DELIVERY",
     category: "DELIVERY",
     priority: "HIGH",
@@ -235,28 +240,29 @@ const tickets = [
   },
   {
     externalId: "SEED-017",
-    subject: "Shipping tracking unavailable",
-    body: "The tracking information is unavailable.",
+    subject: "Shipment tracking information unavailable",
+    body: "The tracking number provided for my shipment does not display any delivery information.",
     autoCategory: "DELIVERY",
     category: "DELIVERY",
     priority: "MEDIUM",
-    status: "IN_PROGRESS",
+    status: "OPEN",
   },
   {
     externalId: "SEED-018",
-    subject: "Delivery status update",
-    body: "Please provide a delivery status update.",
+    subject: "Request to change delivery instructions",
+    body: "Please update my delivery instructions to leave the package at the reception desk.",
     autoCategory: "DELIVERY",
     category: "DELIVERY",
     priority: "LOW",
-    status: "RESOLVED",
+    status: "OPEN",
   },
 
-  // HUMAN REVIEWED TICKETS
+  // ==================== HUMAN REVIEWED TICKETS ====================
+
   {
     externalId: "SEED-019",
-    subject: "Refund request classified incorrectly",
-    body: "My refund is pending. Please investigate.",
+    subject: "Refund processing page freezes",
+    body: "Whenever I attempt to request a refund, the application freezes and displays an unexpected exception.",
     autoCategory: "BILLING",
     category: "BUG",
     priority: "HIGH",
@@ -266,34 +272,35 @@ const tickets = [
   },
   {
     externalId: "SEED-020",
-    subject: "Package tracking issue reviewed",
-    body: "The tracking page returns an error.",
+    subject: "Delivery notification preferences",
+    body: "I would like a new feature that allows customers to configure SMS and email notifications for package deliveries.",
     autoCategory: "DELIVERY",
-    category: "BUG",
+    category: "FEATURE_REQUEST",
     priority: "MEDIUM",
-    status: "RESOLVED",
+    status: "OPEN",
     isHumanOverride: true,
     isReviewed: true,
   },
   {
     externalId: "SEED-021",
-    subject: "Login issue reviewed by agent",
-    body: "The login screen is broken.",
+    subject: "Login blocked due to incorrect subscription charge",
+    body: "My account access was suspended because the system incorrectly marked my paid subscription as unpaid.",
     autoCategory: "LOGIN",
-    category: "BUG",
+    category: "LOGIN",
     priority: "HIGH",
     status: "IN_PROGRESS",
-    isHumanOverride: true,
+    isHumanOverride: false,
     isReviewed: true,
   },
 
-  // XSS TEST TICKET
+  // ==================== XSS TEST TICKET ====================
+
   {
     externalId: "SEED-022",
     subject: "HTML rendering security test",
     body: 'Please investigate this message: <script>alert("XSS")</script><img src="x" onerror="alert(1)">',
-    autoCategory: "FEATURE_REQUEST",
-    category: "FEATURE_REQUEST",
+    autoCategory: "BUG",
+    category: "BUG",
     priority: "MEDIUM",
     status: "OPEN",
   },

@@ -23,6 +23,7 @@
           +--> Ticket listing / statistics
           +--> Resource management / availability
           +--> Booking service (MongoDB transactions)
+          +--> Booking expiration service (scheduled + read-triggered)
           |
        Mongoose
           |
@@ -85,6 +86,34 @@ The transaction helper can retry transient write conflicts. After a competing tr
 
 **Verification:** `backend/tests/booking-race.test.js` sends ten concurrent requests for one resource and one user. Run `npm run test:booking-race` from backend with a valid `JWT_TOKEN`, active `RESOURCE_ID` and `API_URL=http://localhost:3000` (no `/api/bookings` suffix). Use a free slot and a user below the active limit. Expected: one HTTP 201, nine HTTP 409, zero unexpected responses. Also test different users competing for the same slot and one user competing across different resources. These are expected outcomes, not recorded test results.
 
+### Automatic booking expiration — Time ran out
+
+A pending booking must not remain actionable after its scheduled start time simply because an administrator has not reviewed it. The backend expiration solution uses the booking's `startTime` as the deadline, rather than its `endTime`.
+
+| File / component | Responsibility |
+|---|---|
+| `backend/src/services/bookingExpiry.service.js` | `expirePendingBookings()` performs a conditional bulk update; `startBookingExpiryJob()` runs it immediately and every 10 seconds, prevents overlapping scheduled runs within one process and logs failures. |
+| `backend/src/index.js` | Starts the expiration job after MongoDB connects. |
+| `backend/src/models/Booking.js` | Adds the compound index `{status: 1, startTime: 1}` to support expiration queries. |
+| Booking list/detail and resource availability controllers; `backend/src/routes/adminRouter.js` | Run expiration before reading booking data or administrator statistics to reduce stale results between scheduled checks. |
+
+The central database operation is:
+
+```js
+await Booking.updateMany(
+  { status: "PENDING", startTime: { $lte: new Date() } },
+  { $set: { status: "REJECTED", decisionNote: "Time ran out" } }
+);
+```
+
+The conditional update is atomic per booking and idempotent: once a booking leaves PENDING, later sweeps cannot overwrite its status or decision note. APPROVED, CANCELLED and previously REJECTED bookings remain unchanged. Existing lifecycle guards reject late approval requests with HTTP 409. The expiration index is not a TTL index; booking records are retained for history and reporting. Rejected bookings no longer participate in PENDING/APPROVED resource overlap checks.
+
+The frontend uses the existing booking status and decision-note fields to display REJECTED and “Time ran out” in My Bookings and Manage Bookings after fetching fresh data. No separate frontend timer is required for persistence.
+
+**Trade-offs:** Scheduled expiration is eventually consistent, normally within a 10-second polling interval while the backend and database are healthy. Startup processing catches up after downtime. Read-triggered sweeps add database operations; a booking can still cross its deadline between a sweep and a subsequent read. An already-open frontend page requires a refresh or refetch. No distributed scheduler or real-time push mechanism is introduced.
+
+**Verification plan:** In a disposable test database, create a PENDING booking, move its start/end timestamps into the past, wait for the scheduled sweep and verify the persisted status and decision note. Confirm future PENDING and past APPROVED bookings remain unchanged, existing rejection notes are preserved, late approval returns HTTP 409, and booking lists, resource availability and administrator counts reflect the new state. Restart the backend with an expired PENDING booking to verify startup catch-up. These are expected results, not recorded test outcomes.
+
 ### T-B2: idempotent import and human override
 
 `externalId` is unique (`backend/src/models/Ticket.js:5–10`). `importTickets` looks up that key before inserting. A duplicate-key error (11000) from concurrent creation is handled by re-reading the existing ticket and applying the existing-ticket path (`ticketImport.service.js:85–108`).
@@ -101,121 +130,6 @@ Example sequential trace:
 | Import changed subject/body | LOGIN | BUG | true | true |
 
 `updateTicket` records actual changes to category, priority, status and assigneeId as separate TicketEvent documents containing old/new values, actor and creation timestamp. No public event-edit/delete route is exposed. However, this is application-level append-only behaviour, not database-enforced immutability. Ticket save and event insertion are separate operations, and actor attribution currently trusts `X-Agent`. A simultaneous import and manual review can also race because the override check is a read followed by save. Sequential T-B2 protection is implemented; stronger concurrent protection and atomic audit writes are improvements in Part D.
-
-## Part C — Measure First, Then Optimise
-
-### Existing optimizations and measurement status
-
-`backend/src/models/Ticket.js:71–78` declares indexes on `{status:1, category:1}`, `{assigneeId:1}` and `{createdAt:-1}`, in addition to the unique externalId index. `backend/src/services/ticket.service.js:27–33` uses server-side pagination, newest-first sorting, `.lean()` and parallel list/count queries. The creation-time index is the relevant candidate for the unfiltered `GET /api/tickets?limit=100` request. The other indexes serve different query patterns.
-
-**Actual before/after latency has not been measured in the supplied source or this environment.** The following controlled experiment must be run before claiming a performance improvement. It isolates the creation-time index while keeping the current query implementation unchanged; it is a reconstructed baseline, not a historical measurement.
-
-### Reproducible experiment (600 tickets)
-
-Use a disposable database, the same backend process/configuration and a valid test-user JWT. Never drop indexes in production. Start the backend and ensure the index build is complete. Save the following as `backend/tests/ticket-latency.test.js` locally. Requires Node.js with native fetch. The script imports 600 deterministic test tickets in two batches (the API permits at most 500 per import), warms the endpoint five times and measures 30 sequential requests, including full response consumption. It checks HTTP success, at least 500 total tickets and exactly 100 returned rows.
-
-```js
-require('dotenv').config();
-const { performance } = require('node:perf_hooks');
-const base = (process.env.API_URL || 'http://localhost:3000').replace(/\/$/, '');
-const token = process.env.JWT_TOKEN;
-if (!token) throw new Error('Set JWT_TOKEN for a test user');
-const headers = { token, 'Content-Type': 'application/json' };
-async function request(path, options = {}) {
-  const res = await fetch(base + path, { ...options, headers });
-  const data = await res.json();
-  if (!res.ok) throw new Error(`${res.status}: ${JSON.stringify(data)}`);
-  return data;
-}
-async function main() {
-  if (process.argv.includes('--seed')) {
-    const tickets = Array.from({length: 600}, (_, i) => ({
-      externalId: `PERF-${String(i).padStart(4, '0')}`,
-      subject: `Benchmark login issue ${i}`,
-      body: `Password reset support request number ${i}.`
-    }));
-    for (let i = 0; i < tickets.length; i += 300) {
-      console.log(await request('/api/tickets/import', {
-        method: 'POST', body: JSON.stringify({tickets: tickets.slice(i, i + 300)})
-      }));
-    }
-    return;
-  }
-  const samples = [];
-  let total;
-  for (let i = 0; i < 35; i++) {
-    const start = performance.now();
-    const data = await request('/api/tickets?limit=100');
-    const ms = performance.now() - start;
-    if (data.total < 500 || data.tickets.length !== 100) {
-      throw new Error('Need at least 500 tickets and 100 returned rows');
-    }
-    total = data.total;
-    if (i >= 5) samples.push(ms);
-  }
-  const sorted = [...samples].sort((a,b) => a-b);
-  const round = n => Number(n.toFixed(2));
-  console.log(JSON.stringify({
-    total, requests: samples.length,
-    meanMs: round(samples.reduce((a,b) => a+b,0)/samples.length),
-    medianMs: round((sorted[14]+sorted[15])/2),
-    p95Ms: round(sorted[Math.ceil(sorted.length*0.95)-1]),
-    samplesMs: samples.map(round)
-  }, null, 2));
-}
-main().catch(e => { console.error(e); process.exitCode = 1; });
-```
-
-From backend, set `API_URL` to the server origin and `JWT_TOKEN` in the local `.env` (do not commit secrets). Run:
-
-```bash
-node tests/ticket-latency.test.js --seed
-```
-
-Connect mongosh to the same disposable database. Check the actual collection/index names and record the execution plan before changing anything:
-
-```javascript
-db.tickets.countDocuments({})
-db.tickets.getIndexes()
-// Baseline: remove only the creation-time index if present.
-db.tickets.dropIndex('createdAt_-1')
-db.tickets.find({}).sort({createdAt:-1}).limit(100).explain('executionStats')
-```
-
-Do not restart the backend between phases, since Mongoose may recreate the index. Run the baseline and retain its output:
-
-```bash
-node tests/ticket-latency.test.js > latency-before.json
-```
-
-Restore the index in mongosh, wait for completion, and inspect the optimized plan:
-
-```javascript
-db.tickets.createIndex({createdAt:-1})
-db.tickets.find({}).sort({createdAt:-1}).limit(100).explain('executionStats')
-```
-
-```bash
-node tests/ticket-latency.test.js > latency-after.json
-```
-
-Keep dataset, machine, database location, Node version, network, authentication and request parameters identical. Avoid concurrent imports/updates during measurement. Record execution plan stages, totalDocsExamined and totalKeysExamined. The countDocuments query is also part of endpoint latency; the find explain alone does not measure the entire endpoint. Repeat the paired runs if network variability is high.
-
-### Results (fill using actual output)
-
-| Metric | Before: no creation-time index | After: creation-time index |
-|---|---|---|
-| Total tickets | Pending measurement | Pending measurement |
-| Warm-up / measured requests | 5 / 30 planned | 5 / 30 planned |
-| Mean latency (ms) | Not measured | Not measured |
-| Median latency (ms) | Not measured | Not measured |
-| P95 latency (ms) | Not measured | Not measured |
-| Find execution plan | Not measured | Not measured |
-| Documents examined | Not measured | Not measured |
-
-Median improvement (%) = `(beforeMedian - afterMedian) / beforeMedian × 100`. A negative value means a regression. Do not claim a speedup without actual results. Attach both JSON outputs or transcribe their measured values before submission.
-
-**Trade-off:** the creation-time index can avoid a blocking sort and reduce the work needed to retrieve the newest 100 documents, but consumes storage and increases write/index maintenance cost during imports. At only 600 documents, network and count-query overhead may dominate; the measured improvement may be small or absent. Escaped case-insensitive substring regex search is a separate workload and is not optimized by this experiment.
 
 ## Part D — What I would improve with one more day
 
@@ -234,3 +148,5 @@ The first three improvements are higher priority than cosmetic changes because t
 ---
 
 Evidence status: implementation details are based on the uploaded project snapshot `engnf1-fullstack-Surajit-Debnath-main(20261125-054219).zip`. No live database, authenticated endpoint, benchmark or concurrency test was executed during preparation of this document. Part C remains incomplete until actual measurements are collected.
+
+The booking expiration section documents the subsequent backend changes discussed after that snapshot; the updated source and runtime behavior have not been independently verified.
