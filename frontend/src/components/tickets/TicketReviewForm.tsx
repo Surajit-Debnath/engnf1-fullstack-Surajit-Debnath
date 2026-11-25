@@ -5,13 +5,13 @@ import axios from "axios";
 
 import {
     ShieldCheck,
-    Save,
     RotateCcw,
     UserRound,
     UserMinus,
     AlertCircle,
     CircleCheck,
-    Info
+    Info,
+    ArrowRight
 } from "lucide-react";
 
 import { Button } from "../ui/Button";
@@ -62,6 +62,10 @@ export default function TicketReviewForm({
     onUpdated
 }: TicketReviewFormProps) {
 
+    // ==========================================
+    // FORM STATE
+    // ==========================================
+
     const [category, setCategory] =
         useState<TicketCategory>(ticket.category);
 
@@ -75,56 +79,94 @@ export default function TicketReviewForm({
         useState(ticket.assigneeId ?? "");
 
     const [loading, setLoading] = useState(false);
+
     const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
 
 
-    // Detect modified fields
+    // ==========================================
+    // DETECT CHANGES
+    // ==========================================
 
-    const hasChanges =
-        category !== ticket.category ||
-        priority !== ticket.priority ||
-        status !== ticket.status ||
-        (assigneeId.trim() || null) !==
-            (ticket.assigneeId ?? null);
-
+    const normalizedAssignee =
+        assigneeId.trim() || null;
 
     const categoryChanged =
         category !== ticket.category;
 
+    const priorityChanged =
+        priority !== ticket.priority;
+
+    const statusChanged =
+        status !== ticket.status;
+
+    const assigneeChanged =
+        normalizedAssignee !== (ticket.assigneeId ?? null);
+
+
+    const hasChanges =
+        categoryChanged ||
+        priorityChanged ||
+        statusChanged ||
+        assigneeChanged;
+
+
+    // ==========================================
+    // REVIEW RULES
+    // ==========================================
+
     const willBeReviewed =
+        ticket.isReviewed ||
         categoryChanged ||
         (
             ticket.status === "OPEN" &&
             status !== "OPEN"
         );
 
+    const willHaveHumanOverride =
+        ticket.isHumanOverride || categoryChanged;
 
-    // Reset form
+    const canConfirmClassification =
+        !ticket.isReviewed &&
+        ticket.status === "OPEN" &&
+        category === ticket.autoCategory &&
+        !willBeReviewed;
+
+
+    // ==========================================
+    // RESET FORM
+    // ==========================================
 
     function resetForm() {
 
         setCategory(ticket.category);
+
         setPriority(ticket.priority);
+
         setStatus(ticket.status);
+
         setAssigneeId(ticket.assigneeId ?? "");
 
         setError("");
-        setSuccess("");
 
     }
 
 
-    // Submit changes
+    // ==========================================
+    // SUBMIT REVIEW
+    // ==========================================
 
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    async function handleSubmit(
+        event: FormEvent<HTMLFormElement>
+    ) {
 
         event.preventDefault();
 
         if (loading || !hasChanges) return;
 
         setError("");
-        setSuccess("");
+
+
+        // Validate authenticated user
 
         if (!user?.email) {
 
@@ -135,11 +177,20 @@ export default function TicketReviewForm({
             return;
         }
 
-        const normalizedAssignee =
-            assigneeId.trim() || null;
+
+        // Ensure review will be completed
+
+        if (!willBeReviewed) {
+
+            setError(
+                "To complete the review, change the category or move the ticket from Open to another appropriate status."
+            );
+
+            return;
+        }
 
 
-        // Validate MongoDB ObjectId
+        // Validate assignee ObjectId
 
         if (
             normalizedAssignee !== null &&
@@ -154,33 +205,46 @@ export default function TicketReviewForm({
         }
 
 
-        // Send only modified fields
+        // Prepare PATCH payload
 
         const updates: UpdateTicketPayload = {};
 
-        if (category !== ticket.category) {
+
+        if (categoryChanged) {
+
             updates.category = category;
+
         }
 
-        if (priority !== ticket.priority) {
+        if (priorityChanged) {
+
             updates.priority = priority;
+
         }
 
-        if (status !== ticket.status) {
+        if (statusChanged) {
+
             updates.status = status;
+
         }
 
-        if (
-            normalizedAssignee !==
-            (ticket.assigneeId ?? null)
-        ) {
+        if (assigneeChanged) {
+
             updates.assigneeId = normalizedAssignee;
+
         }
 
-        if (Object.keys(updates).length === 0) return;
+
+        if (Object.keys(updates).length === 0) {
+
+            setError("No changes to save.");
+
+            return;
+        }
 
 
         setLoading(true);
+
 
         try {
 
@@ -190,21 +254,36 @@ export default function TicketReviewForm({
                 user.email
             );
 
-            // Synchronize form with backend response
+
+            // Synchronize with actual backend response
 
             setCategory(response.ticket.category);
+
             setPriority(response.ticket.priority);
+
             setStatus(response.ticket.status);
 
             setAssigneeId(
                 response.ticket.assigneeId ?? ""
             );
 
+
+            // Confirm backend has completed the review
+
+            if (!response.ticket.isReviewed) {
+
+                setError(
+                    "Changes were saved, but the ticket is still awaiting review. Refresh the ticket before continuing."
+                );
+
+                return;
+            }
+
+
+            // Parent handles navigation to Triage Queue
+
             onUpdated(response);
 
-            setSuccess(
-                "Ticket updated successfully."
-            );
 
         } catch (err) {
 
@@ -217,12 +296,14 @@ export default function TicketReviewForm({
                 setError(
                     typeof message === "string"
                         ? message
-                        : "Unable to update the ticket."
+                        : "Unable to save ticket review."
                 );
 
             } else {
 
-                setError("Something went wrong.");
+                setError(
+                    "Something went wrong. Please try again."
+                );
 
             }
 
@@ -233,9 +314,92 @@ export default function TicketReviewForm({
         }
 
     }
+    async function handleConfirmClassification() {
+        if (loading) return;
 
+        setError("");
+
+        if (!user?.email) {
+            setError("Unable to identify the authenticated user.");
+            return;
+        }
+
+        if (
+            ticket.isReviewed ||
+            ticket.status !== "OPEN" ||
+            category !== ticket.autoCategory
+        ) {
+            setError("Unable to confirm this classification.");
+            return;
+        }
+
+        if (
+            normalizedAssignee !== null &&
+            !/^[a-f\d]{24}$/i.test(normalizedAssignee)
+        ) {
+            setError("Invalid assignee ID.");
+            return;
+        }
+
+        const updates: UpdateTicketPayload = {
+            status: status === "OPEN"
+                ? "IN_PROGRESS"
+                : status
+        };
+
+        if (categoryChanged) {
+            updates.category = category;
+        }
+
+        if (priorityChanged) {
+            updates.priority = priority;
+        }
+
+        if (assigneeChanged) {
+            updates.assigneeId = normalizedAssignee;
+        }
+
+        setLoading(true);
+
+        try {
+            const response = await updateTicket(
+                ticket._id,
+                updates,
+                user.email
+            );
+
+            if (!response.ticket.isReviewed) {
+                setError("Unable to complete the review.");
+                return;
+            }
+
+            onUpdated(response);
+
+        } catch (err) {
+            if (axios.isAxiosError(err)) {
+                const message =
+                    err.response?.data?.error?.message ??
+                    err.response?.data?.message;
+
+                setError(
+                    typeof message === "string"
+                        ? message
+                        : "Unable to confirm classification."
+                );
+            } else {
+                setError("Something went wrong.");
+            }
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    // ==========================================
+    // RENDER FORM
+    // ==========================================
 
     return (
+
         <section className="rounded-2xl border border-slate-200 bg-white p-6">
 
             {/* Header */}
@@ -244,18 +408,22 @@ export default function TicketReviewForm({
 
                 <div className="rounded-xl bg-indigo-50 p-3 text-indigo-600">
 
-                    <ShieldCheck size={24} />
+                    <ShieldCheck size={26} />
 
                 </div>
 
                 <div>
 
                     <h2 className="text-lg font-semibold text-slate-900">
+
                         Human Review
+
                     </h2>
 
-                    <p className="text-sm text-slate-500">
-                        Review and update ticket information
+                    <p className="mt-1 text-sm text-slate-500">
+
+                        Verify classification and update ticket information.
+
                     </p>
 
                 </div>
@@ -265,8 +433,9 @@ export default function TicketReviewForm({
 
             <form
                 onSubmit={handleSubmit}
-                className="mt-6 space-y-5"
+                className="mt-6 space-y-6"
             >
+
 
                 {/* Error Message */}
 
@@ -278,29 +447,49 @@ export default function TicketReviewForm({
                     >
 
                         <AlertCircle
-                            size={18}
+                            size={20}
                             className="shrink-0"
                         />
 
-                        {error}
+                        <p>{error}</p>
 
                     </div>
 
                 )}
 
 
-                {/* Success Message */}
+                {/* Review Instructions */}
 
-                {success && (
+                {!ticket.isReviewed && (
 
-                    <div
-                        role="status"
-                        className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700"
-                    >
+                    <div className="flex items-start gap-3 rounded-xl border border-indigo-100 bg-indigo-50 p-4">
 
-                        <CircleCheck size={18} />
+                        <Info
+                            size={20}
+                            className="shrink-0 text-indigo-600"
+                        />
 
-                        {success}
+                        <div>
+
+                            <p className="text-sm font-semibold text-indigo-700">
+
+                                Complete Ticket Review
+
+                            </p>
+
+                            <p className="mt-2 text-xs leading-relaxed text-indigo-600">
+
+                                Verify the automated category and
+                                priority. If the category is correct,
+                                move the ticket from Open to In Progress
+                                or another appropriate status.
+
+                                If the category is incorrect, select
+                                the correct category.
+
+                            </p>
+
+                        </div>
 
                     </div>
 
@@ -313,9 +502,11 @@ export default function TicketReviewForm({
 
                     <label
                         htmlFor="review-category"
-                        className="mb-2 block text-sm font-medium text-slate-700"
+                        className="mb-2 block text-sm font-semibold text-slate-700"
                     >
+
                         Ticket Category
+
                     </label>
 
                     <select
@@ -323,23 +514,53 @@ export default function TicketReviewForm({
                         value={category}
                         disabled={loading}
                         onChange={event => {
+
                             setCategory(
                                 event.target.value as TicketCategory
                             );
-                            setSuccess("");
+
+                            setError("");
+
                         }}
                         className={inputStyles}
                     >
 
                         {categories.map(item => (
 
-                            <option key={item} value={item}>
+                            <option
+                                key={item}
+                                value={item}
+                            >
+
                                 {formatLabel(item)}
+
                             </option>
 
                         ))}
 
                     </select>
+
+                    <p className="mt-2 text-xs text-slate-500">
+
+                        Automated classification:{" "}
+
+                        <span className="font-semibold text-indigo-600">
+
+                            {formatLabel(ticket.autoCategory)}
+
+                        </span>
+
+                    </p>
+
+                    {categoryChanged && (
+
+                        <p className="mt-1 text-xs font-medium text-amber-600">
+
+                            Category has been manually changed.
+
+                        </p>
+
+                    )}
 
                 </div>
 
@@ -350,9 +571,11 @@ export default function TicketReviewForm({
 
                     <label
                         htmlFor="review-priority"
-                        className="mb-2 block text-sm font-medium text-slate-700"
+                        className="mb-2 block text-sm font-semibold text-slate-700"
                     >
+
                         Ticket Priority
+
                     </label>
 
                     <select
@@ -360,18 +583,26 @@ export default function TicketReviewForm({
                         value={priority}
                         disabled={loading}
                         onChange={event => {
+
                             setPriority(
                                 event.target.value as TicketPriority
                             );
-                            setSuccess("");
+
+                            setError("");
+
                         }}
                         className={inputStyles}
                     >
 
                         {priorities.map(item => (
 
-                            <option key={item} value={item}>
+                            <option
+                                key={item}
+                                value={item}
+                            >
+
                                 {formatLabel(item)}
+
                             </option>
 
                         ))}
@@ -387,9 +618,11 @@ export default function TicketReviewForm({
 
                     <label
                         htmlFor="review-status"
-                        className="mb-2 block text-sm font-medium text-slate-700"
+                        className="mb-2 block text-sm font-semibold text-slate-700"
                     >
+
                         Ticket Status
+
                     </label>
 
                     <select
@@ -397,23 +630,43 @@ export default function TicketReviewForm({
                         value={status}
                         disabled={loading}
                         onChange={event => {
+
                             setStatus(
                                 event.target.value as TicketStatus
                             );
-                            setSuccess("");
+
+                            setError("");
+
                         }}
                         className={inputStyles}
                     >
 
                         {statuses.map(item => (
 
-                            <option key={item} value={item}>
+                            <option
+                                key={item}
+                                value={item}
+                            >
+
                                 {formatLabel(item)}
+
                             </option>
 
                         ))}
 
                     </select>
+
+                    {!ticket.isReviewed &&
+                        ticket.status === "OPEN" && (
+
+                        <p className="mt-2 text-xs text-slate-500">
+
+                            Moving the ticket out of Open will
+                            mark it as reviewed.
+
+                        </p>
+
+                    )}
 
                 </div>
 
@@ -424,9 +677,11 @@ export default function TicketReviewForm({
 
                     <label
                         htmlFor="review-assignee"
-                        className="mb-2 block text-sm font-medium text-slate-700"
+                        className="mb-2 block text-sm font-semibold text-slate-700"
                     >
-                        Assignee ID
+
+                        Assigned Agent
+
                     </label>
 
                     <input
@@ -437,70 +692,109 @@ export default function TicketReviewForm({
                         placeholder="Unassigned"
                         maxLength={24}
                         onChange={event => {
+
                             setAssigneeId(event.target.value);
-                            setSuccess("");
+
+                            setError("");
+
                         }}
                         className={inputStyles}
                     />
+
+
+                    {/* Current Assignee */}
+
+                    {assigneeId && user &&
+                        assigneeId === user._id && (
+
+                        <p className="mt-2 flex items-center gap-2 text-xs font-medium text-indigo-600">
+
+                            <UserRound size={14} />
+
+                            Assigned to you ({user.name})
+
+                        </p>
+
+                    )}
+
+
+                    {/* Assignment Actions */}
 
                     <div className="mt-3 flex flex-wrap gap-2">
 
                         <Button
                             variant="secondary"
                             size="sm"
+                            type="button"
                             text="Assign to Me"
                             startIcon={<UserRound size={15} />}
-                            disabled={loading || !user?._id}
+                            disabled={
+                                loading ||
+                                !user?._id ||
+                                assigneeId === user._id
+                            }
                             onClick={() => {
+
                                 setAssigneeId(user?._id ?? "");
-                                setSuccess("");
+
+                                setError("");
+
                             }}
                         />
 
                         <Button
                             variant="secondary"
                             size="sm"
+                            type="button"
                             text="Unassign"
                             startIcon={<UserMinus size={15} />}
                             disabled={loading || !assigneeId}
                             onClick={() => {
+
                                 setAssigneeId("");
-                                setSuccess("");
+
+                                setError("");
+
                             }}
                         />
 
                     </div>
 
                     <p className="mt-2 text-xs text-slate-500">
-                        Enter a valid user ObjectId or assign
-                        the ticket to yourself.
+
+                        Assign yourself or enter a valid user ObjectId.
+
                     </p>
 
                 </div>
 
 
-                {/* Human Override Warning */}
+                {/* Human Override Protection */}
 
                 {categoryChanged && (
 
-                    <div className="flex items-start gap-3 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+                    <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
 
                         <ShieldCheck
-                            size={20}
-                            className="shrink-0 text-indigo-600"
+                            size={22}
+                            className="shrink-0 text-amber-600"
                         />
 
                         <div>
 
-                            <p className="text-sm font-semibold text-indigo-700">
+                            <p className="text-sm font-semibold text-amber-700">
+
                                 Human Override Protection
+
                             </p>
 
-                            <p className="mt-1 text-xs leading-relaxed text-indigo-600">
+                            <p className="mt-1 text-xs leading-relaxed text-amber-600">
+
                                 Changing the category activates
                                 human override protection.
-                                Future imports will preserve
-                                the manually selected category.
+                                Future automatic imports will
+                                preserve the manually selected category.
+
                             </p>
 
                         </div>
@@ -510,53 +804,225 @@ export default function TicketReviewForm({
                 )}
 
 
-                {/* Review Information */}
+                {/* Review Summary */}
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+
+                    <h3 className="mb-4 text-sm font-semibold text-slate-800">
+
+                        Review Summary
+
+                    </h3>
+
+                    <div className="space-y-3">
+
+                        {/* Review Status */}
+
+                        <div className="flex items-center justify-between gap-3">
+
+                            <span className="text-xs text-slate-600">
+
+                                Review Status After Saving
+
+                            </span>
+
+                            <span
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                    (willBeReviewed || canConfirmClassification)
+                                        ? "bg-emerald-100 text-emerald-700"
+                                        : "bg-amber-100 text-amber-700"
+                                }`}
+                            >
+
+                                {(willBeReviewed || canConfirmClassification)
+                                    ? "Reviewed"
+                                    : "Pending Review"}
+
+                            </span>
+
+                        </div>
+
+
+                        {/* Human Override */}
+
+                        <div className="flex items-center justify-between gap-3">
+
+                            <span className="text-xs text-slate-600">
+
+                                Human Override
+
+                            </span>
+
+                            <span
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                    willHaveHumanOverride
+                                        ? "bg-indigo-100 text-indigo-700"
+                                        : "bg-slate-200 text-slate-600"
+                                }`}
+                            >
+
+                                {willHaveHumanOverride
+                                    ? "Protected"
+                                    : "Not Activated"}
+
+                            </span>
+
+                        </div>
+
+
+                        {/* Number of Changes */}
+
+                        <div className="flex items-center justify-between gap-3">
+
+                            <span className="text-xs text-slate-600">
+
+                                Modified Fields
+
+                            </span>
+
+                            <span className="text-sm font-semibold text-slate-800">
+
+                                {
+                                    Number(categoryChanged) +
+                                    Number(priorityChanged) +
+                                    Number(statusChanged || canConfirmClassification) +
+                                    Number(assigneeChanged)
+                                }
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                {/* Review Completion Feedback */}
 
                 {!ticket.isReviewed && willBeReviewed && (
 
-                    <div className="flex items-start gap-3 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-700">
+                    <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
 
-                        <Info
-                            size={18}
-                            className="shrink-0"
+                        <CircleCheck
+                            size={20}
+                            className="shrink-0 text-emerald-600"
                         />
 
-                        Saving these changes will mark
-                        the ticket as reviewed.
+                        <div>
+
+                            <p className="text-sm font-semibold text-emerald-700">
+
+                                Ready to Complete Review
+
+                            </p>
+
+                            <p className="mt-1 text-xs leading-relaxed text-emerald-600">
+
+                                Saving these changes will mark
+                                the ticket as reviewed and return
+                                you to the Triage Queue.
+
+                            </p>
+
+                        </div>
 
                     </div>
 
                 )}
 
 
-                {/* Actions */}
+                {/* Incomplete Review Warning */}
 
-                <div className="flex flex-wrap gap-3 border-t border-slate-100 pt-5">
+                {!willBeReviewed && hasChanges && !canConfirmClassification && (
+
+                    <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-700">
+
+                        <AlertCircle
+                            size={18}
+                            className="shrink-0"
+                        />
+
+                        <p>
+
+                            Changing only the priority or assignee
+                            does not complete the review. Update
+                            the category or move the ticket out of Open.
+
+                        </p>
+
+                    </div>
+
+                )}
+
+               {canConfirmClassification && (
+
+                    <div className="space-y-2">
+
+                        <Button
+                            variant="primary"
+                            size="fullWidth"
+                            type="button"
+                            text="Confirm Classification"
+                            startIcon={<CircleCheck size={18} />}
+                            loading={loading}
+                            disabled={!user || loading}
+                            onClick={handleConfirmClassification}
+                        />
+
+                        <p className="text-center text-xs text-slate-500">
+                            Confirming the classification will move
+                            the ticket to In Progress and save your changes.
+                        </p>
+
+                    </div>
+
+                )}
+                {/* Form Actions */}
+
+                <div className="flex flex-wrap gap-3 border-t border-slate-200 pt-5">
 
                     <Button
                         variant="secondary"
                         size="md"
+                        type="button"
                         text="Reset"
                         startIcon={<RotateCcw size={16} />}
                         disabled={loading || !hasChanges}
                         onClick={resetForm}
                     />
 
-                    <Button
-                        variant="primary"
-                        size="md"
-                        type="submit"
-                        text="Save Changes"
-                        startIcon={<Save size={18} />}
-                        loading={loading}
-                        disabled={!hasChanges || !user}
-                        className="flex-1"
-                    />
+                    {!canConfirmClassification && (
+                        <Button
+                            variant="primary"
+                            size="md"
+                            type="submit"
+                            text="Save Review"
+                            startIcon={<ShieldCheck size={18} />}
+                            endIcon={<ArrowRight size={16} />}
+                            loading={loading}
+                            disabled={
+                                !hasChanges ||
+                                !willBeReviewed ||
+                                !user
+                            }
+                            className="flex-1"
+                        />
+                    )}
 
                 </div>
+
+                <p className="text-center text-xs text-slate-400">
+
+                    You will return to the Triage Queue
+                    after a successful review.
+
+                </p>
 
             </form>
 
         </section>
+
     );
+
 }

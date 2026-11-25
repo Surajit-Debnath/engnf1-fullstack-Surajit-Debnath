@@ -45,7 +45,10 @@ export default function App() {
           />
 
           <Route path="triage" element={<TriageQueue/>} />
-
+           <Route
+                path="triage/:id"
+                element={<TicketDetails reviewMode />}
+            />
           <Route path="bookings" element={<ComingSoon title="My Bookings" />} />
 
           <Route path="resources" element={<ComingSoon title="Resources" />} />
@@ -66,7 +69,10 @@ export default function App() {
           />
 
           <Route path="triage" element={<TriageQueue />} />
-
+          <Route
+               path="triage/:id"
+               element={<TicketDetails reviewMode />}
+           />
           <Route
             path="resources"
             element={<ComingSoon title="Manage Resources" />}

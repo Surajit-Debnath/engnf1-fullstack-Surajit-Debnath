@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 
 import {
     Link,
-    useOutletContext
+    useOutletContext,
+    useLocation,
+    useNavigate
 } from "react-router-dom";
 
 import {
@@ -12,7 +14,8 @@ import {
     AlertCircle,
     CircleCheck,
     ArrowRight,
-    BrainCircuit
+    BrainCircuit,
+    X
 } from "lucide-react";
 
 import { Button } from "../components/ui/Button";
@@ -42,6 +45,15 @@ const priorityOrder: Record<TicketPriority, number> = {
 
 
 export default function TriageQueue() {
+
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    const successMessage =
+        typeof location.state?.message === "string"
+            ? location.state.message
+            : "";
+
 
     const { user } =
         useOutletContext<DashboardContext>();
@@ -207,6 +219,33 @@ export default function TriageQueue() {
 
             </section>
 
+
+            {/* Review Success Notification */}
+
+            {successMessage && (
+                <div
+                    role="status"
+                    className="flex items-center justify-between gap-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4"
+                >
+                    <div className="flex items-center gap-3">
+                        <CircleCheck size={22} className="shrink-0 text-emerald-600" />
+                        <p className="text-sm font-medium text-emerald-700">
+                            {successMessage}
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        aria-label="Dismiss notification"
+                        onClick={() => navigate(location.pathname + location.search, {
+                            replace: true,
+                            state: null
+                        })}
+                        className="rounded-lg p-2 text-emerald-600 hover:bg-emerald-100"
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+            )}
 
             {/* Queue Information */}
 
@@ -431,7 +470,7 @@ export default function TriageQueue() {
                                 {/* Review Action */}
 
                                 <Link
-                                    to={`${dashboardPath}/tickets/${ticket._id}`}
+                                    to={`${dashboardPath}/triage/${ticket._id}`}
                                     className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
                                 >
 

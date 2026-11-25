@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import {
     Link,
     useParams,
-    useOutletContext
+    useOutletContext,
+    useNavigate
 } from "react-router-dom";
 
 import axios from "axios";
@@ -18,21 +19,17 @@ import {
     LoaderCircle,
     AlertCircle,
     RefreshCw,
-    FileText
+    FileText,
+    Eye
 } from "lucide-react";
 
 import { Button } from "../components/ui/Button";
 
 import TicketBadge from "../components/tickets/TicketBadge";
+import TicketReviewForm from "../components/tickets/TicketReviewForm";
+import TicketAuditTrail from "../components/tickets/TicketAuditTrail";
 
-import TicketReviewForm from
-    "../components/tickets/TicketReviewForm";
-
-import TicketAuditTrail from
-    "../components/tickets/TicketAuditTrail";
-
-import { getTicketDetails } from
-    "../services/ticketService";
+import { getTicketDetails } from "../services/ticketService";
 
 import type {
     TicketDetailsResponse,
@@ -44,7 +41,24 @@ import type {
 } from "../components/layouts/DashboardLayout";
 
 
-export default function TicketDetails() {
+// ==========================================
+// COMPONENT PROPS
+// ==========================================
+
+interface TicketDetailsProps {
+    reviewMode?: boolean;
+}
+
+
+// ==========================================
+// MAIN COMPONENT
+// ==========================================
+
+export default function TicketDetails({
+    reviewMode = false
+}: TicketDetailsProps) {
+
+    const navigate = useNavigate();
 
     const { id } = useParams<{ id: string }>();
 
@@ -52,20 +66,36 @@ export default function TicketDetails() {
         useOutletContext<DashboardContext>();
 
 
+    // ==========================================
+    // STATE
+    // ==========================================
+
     const [data, setData] =
         useState<TicketDetailsResponse | null>(null);
 
     const [loading, setLoading] = useState(true);
+
     const [error, setError] = useState("");
+
     const [refreshKey, setRefreshKey] = useState(0);
 
 
-    // Determine correct dashboard path
+    // ==========================================
+    // ROLE-BASED NAVIGATION
+    // ==========================================
 
     const dashboardPath =
         user?.role === "ADMIN"
             ? "/admin/dashboard"
             : "/dashboard";
+
+    const backPath = reviewMode
+        ? `${dashboardPath}/triage`
+        : `${dashboardPath}/tickets`;
+
+    const backLabel = reviewMode
+        ? "Back to Triage Queue"
+        : "Back to Tickets";
 
 
     // ==========================================
@@ -121,7 +151,7 @@ export default function TicketDetails() {
                 } else {
 
                     setError(
-                        "Unable to load ticket details."
+                        "Something went wrong while loading the ticket."
                     );
 
                 }
@@ -129,7 +159,9 @@ export default function TicketDetails() {
             } finally {
 
                 if (!controller.signal.aborted) {
+
                     setLoading(false);
+
                 }
 
             }
@@ -139,31 +171,37 @@ export default function TicketDetails() {
         const timer = setTimeout(fetchDetails, 0);
 
         return () => {
+
             clearTimeout(timer);
+
             controller.abort();
+
         };
 
     }, [id, refreshKey]);
 
 
     // ==========================================
-    // HANDLE SUCCESSFUL UPDATE
+    // HANDLE SUCCESSFUL REVIEW
     // ==========================================
 
-   function handleUpdated(response: UpdateTicketResponse) {
-    setData(previous => {
-        if (!previous) return previous;
+    function handleUpdated(response: UpdateTicketResponse) {
 
-        return {
-            ...previous,
-            ticket: response.ticket
-        };
-    });
+        navigate(`${dashboardPath}/triage`, {
+            replace: true,
+            state: {
+                message: response.ticket.isReviewed
+                    ? `Ticket ${response.ticket.externalId} reviewed successfully.`
+                    : `Ticket ${response.ticket.externalId} updated successfully.`
+            }
+        });
 
-    // Fetch updated ticket and complete audit history
-    setRefreshKey(previous => previous + 1);
-}
+    }
 
+
+    // ==========================================
+    // REFRESH TICKET
+    // ==========================================
 
     function refreshDetails() {
 
@@ -179,6 +217,7 @@ export default function TicketDetails() {
     if (loading) {
 
         return (
+
             <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
 
                 <LoaderCircle
@@ -187,10 +226,13 @@ export default function TicketDetails() {
                 />
 
                 <p className="text-sm text-slate-500">
+
                     Loading ticket details...
+
                 </p>
 
             </div>
+
         );
 
     }
@@ -203,6 +245,7 @@ export default function TicketDetails() {
     if (error || !data) {
 
         return (
+
             <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
 
                 <div className="rounded-full bg-red-50 p-5">
@@ -215,11 +258,15 @@ export default function TicketDetails() {
                 </div>
 
                 <h2 className="text-xl font-semibold text-slate-900">
+
                     Unable to load ticket
+
                 </h2>
 
-                <p className="text-sm text-slate-500">
+                <p className="text-center text-sm text-slate-500">
+
                     {error || "Ticket not found."}
+
                 </p>
 
                 <Button
@@ -231,13 +278,18 @@ export default function TicketDetails() {
                 />
 
                 <Link
-                    to={`${dashboardPath}/tickets`}
-                    className="text-sm font-medium text-indigo-600"
+                    to={backPath}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 transition hover:text-indigo-800"
                 >
-                    Back to Tickets
+
+                    <ArrowLeft size={18} />
+
+                    {backLabel}
+
                 </Link>
 
             </div>
+
         );
 
     }
@@ -245,29 +297,123 @@ export default function TicketDetails() {
 
     const { ticket, events } = data;
 
+    const isAssignedToMe =
+        Boolean(user && ticket.assigneeId) &&
+        ticket.assigneeId === user?._id;
+
+    const canReview =
+        reviewMode && !ticket.isReviewed;
+
 
     // ==========================================
     // PAGE UI
     // ==========================================
 
     return (
+
         <div className="mx-auto max-w-400 space-y-6">
 
-            {/* Back Navigation */}
 
-            <Link
-                to={`${dashboardPath}/tickets`}
-                className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 transition hover:text-indigo-800"
-            >
+            {/* ==========================================
+                BACK NAVIGATION
+            ========================================== */}
 
-                <ArrowLeft size={18} />
+            <div className="flex flex-wrap items-center justify-between gap-3">
 
-                Back to Tickets
+                <Link
+                    to={backPath}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 transition hover:text-indigo-800"
+                >
 
-            </Link>
+                    <ArrowLeft size={18} />
+
+                    {backLabel}
+
+                </Link>
 
 
-            {/* Ticket Header */}
+                {/* Current Page Mode */}
+
+                <span
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${
+                        canReview
+                            ? "bg-indigo-50 text-indigo-700"
+                            : "bg-slate-100 text-slate-600"
+                    }`}
+                >
+
+                    {canReview ? (
+
+                        <ShieldCheck size={15} />
+
+                    ) : (
+
+                        <Eye size={15} />
+
+                    )}
+
+                    {canReview
+                        ? "Review Mode"
+                        : "Read Only"}
+
+                </span>
+
+            </div>
+
+
+            {/* ==========================================
+                ALREADY REVIEWED NOTIFICATION
+            ========================================== */}
+
+            {reviewMode && ticket.isReviewed && (
+
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+
+                    <div className="flex items-start gap-3">
+
+                        <ShieldCheck
+                            size={22}
+                            className="shrink-0 text-emerald-600"
+                        />
+
+                        <div>
+
+                            <p className="text-sm font-semibold text-emerald-700">
+
+                                Ticket Already Reviewed
+
+                            </p>
+
+                            <p className="mt-1 text-xs text-emerald-600">
+
+                                This ticket no longer requires human review.
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        text="Return to Triage"
+                        startIcon={<ArrowLeft size={15} />}
+                        onClick={() =>
+                            navigate(`${dashboardPath}/triage`, {
+                                replace: true
+                            })
+                        }
+                    />
+
+                </div>
+
+            )}
+
+
+            {/* ==========================================
+                TICKET HEADER
+            ========================================== */}
 
             <section className="rounded-2xl border border-slate-200 bg-white p-6">
 
@@ -276,30 +422,41 @@ export default function TicketDetails() {
                     <div className="min-w-0 flex-1">
 
                         <p className="mb-2 text-sm font-semibold text-indigo-600">
+
                             {ticket.externalId}
+
                         </p>
 
                         <h1 className="wrap-break-word text-3xl font-bold tracking-tight text-slate-900">
+
                             {ticket.subject}
+
                         </h1>
 
                         <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-slate-500">
+
+                            {/* Created Date */}
 
                             <span className="flex items-center gap-2">
 
                                 <CalendarDays size={15} />
 
                                 Created{" "}
+
                                 {new Date(ticket.createdAt)
                                     .toLocaleString("en-IN")}
 
                             </span>
+
+
+                            {/* Updated Date */}
 
                             <span className="flex items-center gap-2">
 
                                 <Clock3 size={15} />
 
                                 Updated{" "}
+
                                 {new Date(ticket.updatedAt)
                                     .toLocaleString("en-IN")}
 
@@ -310,7 +467,7 @@ export default function TicketDetails() {
                     </div>
 
 
-                    {/* Current Status */}
+                    {/* Ticket Badges and Refresh */}
 
                     <div className="flex flex-wrap items-center gap-2">
 
@@ -322,6 +479,15 @@ export default function TicketDetails() {
                         <TicketBadge
                             type="status"
                             value={ticket.status}
+                        />
+
+                        <TicketBadge
+                            type="review"
+                            value={
+                                ticket.isReviewed
+                                    ? "REVIEWED"
+                                    : "PENDING_REVIEW"
+                            }
                         />
 
                         <Button
@@ -339,7 +505,9 @@ export default function TicketDetails() {
             </section>
 
 
-            {/* Ticket Description */}
+            {/* ==========================================
+                TICKET DESCRIPTION
+            ========================================== */}
 
             <section className="rounded-2xl border border-slate-200 bg-white p-6">
 
@@ -354,11 +522,15 @@ export default function TicketDetails() {
                     <div>
 
                         <h2 className="text-lg font-semibold text-slate-900">
+
                             Ticket Description
+
                         </h2>
 
                         <p className="text-sm text-slate-500">
+
                             Original support request
+
                         </p>
 
                     </div>
@@ -368,7 +540,9 @@ export default function TicketDetails() {
                 <div className="mt-6 rounded-xl border border-slate-100 bg-slate-50 p-5">
 
                     <p className="whitespace-pre-wrap wrap-break-word text-sm leading-7 text-slate-700">
+
                         {ticket.body}
+
                     </p>
 
                 </div>
@@ -376,11 +550,22 @@ export default function TicketDetails() {
             </section>
 
 
-            {/* Classification and Review */}
+            {/* ==========================================
+                CLASSIFICATION AND REVIEW
+            ========================================== */}
 
-            <div className="grid items-start gap-6 xl:grid-cols-2">
+            <div
+                className={`grid items-start gap-6 ${
+                    canReview
+                        ? "xl:grid-cols-2"
+                        : "grid-cols-1"
+                }`}
+            >
 
-                {/* Classification Information */}
+
+                {/* ==========================================
+                    CLASSIFICATION INFORMATION
+                ========================================== */}
 
                 <section className="rounded-2xl border border-slate-200 bg-white p-6">
 
@@ -395,11 +580,15 @@ export default function TicketDetails() {
                         <div>
 
                             <h2 className="text-lg font-semibold text-slate-900">
+
                                 Classification Information
+
                             </h2>
 
                             <p className="text-sm text-slate-500">
+
                                 Automated and human-reviewed data
+
                             </p>
 
                         </div>
@@ -409,6 +598,7 @@ export default function TicketDetails() {
 
                     <div className="mt-6 divide-y divide-slate-100">
 
+
                         {/* Automated Category */}
 
                         <div className="flex items-center justify-between gap-4 py-5">
@@ -416,11 +606,15 @@ export default function TicketDetails() {
                             <div>
 
                                 <p className="text-sm font-medium text-slate-700">
+
                                     Automated Category
+
                                 </p>
 
                                 <p className="mt-1 text-xs text-slate-400">
-                                    Original classifier prediction
+
+                                    Stored classifier prediction
+
                                 </p>
 
                             </div>
@@ -440,11 +634,15 @@ export default function TicketDetails() {
                             <div>
 
                                 <p className="text-sm font-medium text-slate-700">
+
                                     Current Category
+
                                 </p>
 
                                 <p className="mt-1 text-xs text-slate-400">
+
                                     Active ticket classification
+
                                 </p>
 
                             </div>
@@ -461,9 +659,21 @@ export default function TicketDetails() {
 
                         <div className="flex items-center justify-between gap-4 py-5">
 
-                            <p className="text-sm font-medium text-slate-700">
-                                Review Status
-                            </p>
+                            <div>
+
+                                <p className="text-sm font-medium text-slate-700">
+
+                                    Review Status
+
+                                </p>
+
+                                <p className="mt-1 text-xs text-slate-400">
+
+                                    Human verification status
+
+                                </p>
+
+                            </div>
 
                             <TicketBadge
                                 type="review"
@@ -477,12 +687,14 @@ export default function TicketDetails() {
                         </div>
 
 
-                        {/* Priority */}
+                        {/* Ticket Priority */}
 
                         <div className="flex items-center justify-between gap-4 py-5">
 
                             <p className="text-sm font-medium text-slate-700">
-                                Priority
+
+                                Ticket Priority
+
                             </p>
 
                             <TicketBadge
@@ -498,7 +710,9 @@ export default function TicketDetails() {
                         <div className="flex items-center justify-between gap-4 py-5">
 
                             <p className="text-sm font-medium text-slate-700">
+
                                 Ticket Status
+
                             </p>
 
                             <TicketBadge
@@ -509,17 +723,19 @@ export default function TicketDetails() {
                         </div>
 
 
-                        {/* Assignee */}
+                        {/* Assigned Agent */}
 
                         <div className="py-5">
 
                             <p className="mb-3 text-sm font-medium text-slate-700">
+
                                 Assigned Agent
+
                             </p>
 
                             <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
 
-                                <div className="rounded-full bg-indigo-100 p-2 text-indigo-600">
+                                <div className="shrink-0 rounded-full bg-indigo-100 p-2 text-indigo-600">
 
                                     <UserRound size={20} />
 
@@ -531,17 +747,19 @@ export default function TicketDetails() {
 
                                         {!ticket.assigneeId
                                             ? "Unassigned"
-                                            : ticket.assigneeId === user?._id
-                                                ? user.name
+                                            : isAssignedToMe
+                                                ? user?.name
                                                 : ticket.assigneeId
                                         }
 
                                     </p>
 
-                                    {ticket.assigneeId === user?._id && (
+                                    {isAssignedToMe && (
 
-                                        <p className="text-xs text-slate-500">
+                                        <p className="mt-1 text-xs text-slate-500">
+
                                             Assigned to you
+
                                         </p>
 
                                     )}
@@ -555,15 +773,16 @@ export default function TicketDetails() {
                     </div>
 
 
-                    {/* Override Protection */}
+                    {/* ==========================================
+                        HUMAN OVERRIDE PROTECTION
+                    ========================================== */}
 
                     <div
-                        className={`
-                            mt-4 rounded-xl border p-4
-                            ${ticket.isHumanOverride
+                        className={`mt-4 rounded-xl border p-4 ${
+                            ticket.isHumanOverride
                                 ? "border-indigo-200 bg-indigo-50"
-                                : "border-slate-200 bg-slate-50"}
-                        `}
+                                : "border-slate-200 bg-slate-50"
+                        }`}
                     >
 
                         <div className="flex items-start gap-3">
@@ -604,22 +823,38 @@ export default function TicketDetails() {
                 </section>
 
 
-                {/* Human Review Form */}
+                {/* ==========================================
+                    HUMAN REVIEW FORM
 
-                <TicketReviewForm
-                    key={`${ticket._id}-${ticket.updatedAt}`}
-                    ticket={ticket}
-                    user={user}
-                    onUpdated={handleUpdated}
-                />
+                    Only available from Triage Queue
+                    for unreviewed tickets.
+                ========================================== */}
+
+                {canReview && (
+
+                    <TicketReviewForm
+                        key={`${ticket._id}-${ticket.updatedAt}`}
+                        ticket={ticket}
+                        user={user}
+                        onUpdated={handleUpdated}
+                    />
+
+                )}
 
             </div>
 
 
-            {/* Audit History */}
+            {/* ==========================================
+                AUDIT HISTORY
+
+                Available in both modes.
+            ========================================== */}
 
             <TicketAuditTrail events={events} />
 
+
         </div>
+
     );
+
 }
