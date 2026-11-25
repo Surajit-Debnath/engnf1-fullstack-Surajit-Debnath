@@ -12,7 +12,7 @@ TriageSync is a full-stack support ticket triage and shared-resource scheduling 
 | Service | URL |
 | --- | --- |
 | Deployed frontend | TBD — add deployed frontend URL |
-| Deployed backend | TBD — add deployed backend URL |
+| Deployed backend | https://engnf1-fullstack-surajit-debnath.onrender.com/ |
 | Local frontend | http://localhost:5173 |
 | Local API | http://localhost:3000/api |
 | Local health endpoint | http://localhost:3000/api/health |
