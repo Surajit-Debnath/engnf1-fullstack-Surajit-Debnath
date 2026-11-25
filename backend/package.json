@@ -12,6 +12,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "seed": "node seeds/seed.js",
+    "seed:reset": "node seeds/seed.js --reset",
     "test:booking-race": "node tests/booking-race.test.js"
   },
   "dependencies": {

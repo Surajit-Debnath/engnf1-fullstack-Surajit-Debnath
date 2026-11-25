@@ -129,12 +129,23 @@ SALT_ROUND=10
 
 Never commit real credentials, JWTs or database connection strings. `SALT_ROUND` is listed in the example configuration; current password hashing uses a hard-coded cost of 10.
 
-Seed the development database and start the server:
+### Database Seeding
+
+Run the idempotent seed command to populate the database with the required demonstration data:
 
 ```bash
 npm run seed
-npm run dev
 ```
+
+To delete all existing application records and restore the original demonstration dataset, run:
+
+```bash
+npm run seed:reset
+```
+
+**Warning:** The reset command permanently deletes existing users, resources, tickets, bookings and ticket audit events. Use it only for development, testing or resetting the demonstration database.
+
+The fresh seed creates two users, six resources, 22 support tickets, three reviewed tickets and three corresponding audit events.
 
 Check http://localhost:3000/api/health; the expected response is `{"message":"ok"}`.
 

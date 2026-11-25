@@ -1,6 +1,4 @@
-
 require("dotenv").config();
-
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
@@ -8,7 +6,7 @@ const User = require("../src/models/User");
 const Resource = require("../src/models/Resource");
 const Ticket = require("../src/models/Ticket");
 const TicketEvent = require("../src/models/TicketEvent");
-
+const Booking = require("../src/models/Booking");
 // --------------------------------------------------
 // 1. USERS
 // --------------------------------------------------
@@ -449,6 +447,25 @@ async function seedTickets() {
   console.log(`Reviewed tickets seeded: ${reviewedIds.length}`);
 }
 
+async function clearDatabase() {
+  console.log("\nDeleting previous application data...");
+
+  const bookings = await Booking.deleteMany({});
+  const events = await TicketEvent.deleteMany({});
+  const tickets = await Ticket.deleteMany({});
+  const resources = await Resource.deleteMany({});
+  const users = await User.deleteMany({});
+
+  console.table({
+    bookings: bookings.deletedCount,
+    ticketEvents: events.deletedCount,
+    tickets: tickets.deletedCount,
+    resources: resources.deletedCount,
+    users: users.deletedCount,
+  });
+
+  console.log("Previous application data deleted successfully.");
+}
 // --------------------------------------------------
 // MAIN SEED FUNCTION
 // --------------------------------------------------
@@ -459,9 +476,16 @@ async function seedDatabase() {
       throw new Error("MONGODB_URL is missing from .env");
     }
 
+    const shouldReset = process.argv.includes("--reset");
+
     await mongoose.connect(process.env.MONGODB_URL);
 
     console.log("MongoDB connected");
+    console.log("Database:", mongoose.connection.name);
+
+    if (shouldReset) {
+      await clearDatabase();
+    }
 
     await seedUsers();
     await seedResources();
@@ -471,11 +495,15 @@ async function seedDatabase() {
     console.log("DATABASE SEEDING COMPLETED");
     console.log("================================");
 
-    console.log({
-      users: users.length,
-      resources: resources.length,
-      tickets: tickets.length,
-      reviewedTickets: reviewedIdsCount(),
+    console.table({
+      users: await User.countDocuments(),
+      resources: await Resource.countDocuments(),
+      tickets: await Ticket.countDocuments(),
+      reviewedTickets: await Ticket.countDocuments({
+        isReviewed: true,
+      }),
+      ticketEvents: await TicketEvent.countDocuments(),
+      bookings: await Booking.countDocuments(),
     });
 
   } catch (error) {
@@ -486,9 +514,4 @@ async function seedDatabase() {
     console.log("MongoDB disconnected");
   }
 }
-
-function reviewedIdsCount() {
-  return tickets.filter((ticket) => ticket.isReviewed).length;
-}
-
 seedDatabase();
