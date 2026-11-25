@@ -13,15 +13,18 @@ import TriageQueue from "./pages/TriageQueue";
 import ManageResources from "./pages/admin/ManageResources";
 import Resources from "./pages/Resources";
 import ResourceDetails from "./pages/ResourceDetails";
-function ComingSoon({ title }: { title: string }) {
-  return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center">
-      <h1 className="text-3xl font-bold text-slate-900">{title}</h1>
+import MyBookings from "./pages/MyBookings";
+import BookingDetails from "./pages/BookingDetails";
+import ManageBookings from "./pages/admin/ManageBookings";
+// function ComingSoon({ title }: { title: string }) {
+//   return (
+//     <div className="flex min-h-[60vh] flex-col items-center justify-center">
+//       <h1 className="text-3xl font-bold text-slate-900">{title}</h1>
 
-      <p className="mt-3 text-slate-500">This module is under development.</p>
-    </div>
-  );
-}
+//       <p className="mt-3 text-slate-500">This module is under development.</p>
+//     </div>
+//   );
+// }
 
 export default function App() {
   return (
@@ -52,8 +55,11 @@ export default function App() {
                 path="triage/:id"
                 element={<TicketDetails reviewMode />}
             />
-          <Route path="bookings" element={<ComingSoon title="My Bookings" />} />
-
+          <Route path="bookings" element={<MyBookings />} />
+          <Route
+                  path="bookings/:id"
+                  element={<BookingDetails/>}
+              />
           <Route path="resources" element={<Resources/>} />
           <Route
                path="resources/:id"
@@ -91,7 +97,11 @@ export default function App() {
 
           <Route
             path="bookings"
-            element={<ComingSoon title="Manage Bookings" />}
+            element={<ManageBookings />}
+          />
+          <Route
+            path="bookings/:id"
+            element={<BookingDetails />}
           />
         </Route>
       </Route>
