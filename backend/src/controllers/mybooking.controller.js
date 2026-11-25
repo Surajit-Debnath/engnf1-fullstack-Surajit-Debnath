@@ -1,11 +1,16 @@
 const {myBookingsQuerySchema} = require("../validation/booking.schema");
 const { sendError } = require("../utils/apiResponse");
 const Booking = require("../models/Booking");
+const {expirePendingBookings} = require("../services/bookingExpiry.service");
 async function getMyBookings(userId, query) {
+  await expirePendingBookings();
+
   const { status, page } = query;
   const limit = 10;
   const skip = (page - 1) * limit;
+
   const filter = { userId };
+
   if (status) {
     filter.status = status;
   }

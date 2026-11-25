@@ -3,8 +3,10 @@ const {availabilityQuerySchema} = require("../validation/resource.schema");
 const {objectIdSchema}=require("../validation/ticket.schema")
 const {sendError} = require("../utils/apiResponse");
 const Booking = require("../models/Booking");
-
+const {expirePendingBookings} = require("../services/bookingExpiry.service");
 async function getResourceAvailability(resourceId, from, to) {
+  await expirePendingBookings();
+
   const bookings = await Booking.find({
     resourceId,
     status: {

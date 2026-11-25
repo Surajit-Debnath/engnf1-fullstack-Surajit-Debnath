@@ -5,7 +5,7 @@ const Ticket = require("../models/Ticket");
 const { sendError } = require("../utils/apiResponse");
 const adminRouter = Router();
 const {bookingStatuses}=require("../validation/booking.schema");
-
+const {expirePendingBookings} = require("../services/bookingExpiry.service");
 async function getAdminStatsController(req, res) {
   try {
     // 1. ADMIN authorization
@@ -18,6 +18,7 @@ async function getAdminStatsController(req, res) {
       );
     }
     // 3. Execute statistics queries
+    await expirePendingBookings();
     const [
       activeResources,
       bookingStatusRows,

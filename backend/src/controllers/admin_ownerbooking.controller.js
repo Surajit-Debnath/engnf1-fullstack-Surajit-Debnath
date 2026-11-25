@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Booking = require("../models/Booking");
 const { sendError } = require("../utils/apiResponse");
-
+const {expirePendingBookings} = require("../services/bookingExpiry.service");
 async function admin_OwnerbookingController(req, res) {
   try {
     const { id } = req.params;
@@ -9,7 +9,7 @@ async function admin_OwnerbookingController(req, res) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return sendError(res, 404, "NOT_FOUND", "Booking not found");
     }
-
+    await expirePendingBookings();
     const booking = await Booking.findById(id);
 
     if (!booking) {

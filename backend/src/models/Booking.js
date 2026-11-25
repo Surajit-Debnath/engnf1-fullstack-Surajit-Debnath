@@ -54,7 +54,10 @@ const bookingSchema = new mongoose.Schema(
 
 // Find bookings for a resource efficiently.
 bookingSchema.index({ resourceId: 1, startTime: 1, endTime: 1 });
-
+bookingSchema.index({
+  status: 1,
+  startTime: 1,
+});
 const Booking = mongoose.model('Booking', bookingSchema);
 
 module.exports = Booking;

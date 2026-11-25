@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const Booking = require("../models/Booking");
 const {adminBookingsQuerySchema} = require("../validation/booking.schema");
 const { sendError } = require("../utils/apiResponse");
-
+const {expirePendingBookings} = require("../services/bookingExpiry.service");
 async function getAllBookingsController(req, res) {
   try {
     // 1. Check ADMIN role
@@ -65,6 +65,7 @@ async function getAllBookingsController(req, res) {
     const skip = (page - 1) * limit;
 
     // 6. Fetch bookings and total count
+    await expirePendingBookings();
     const [bookings, total] = await Promise.all([
       Booking.find(filter)
         .sort({ startTime: 1, _id: 1 })
