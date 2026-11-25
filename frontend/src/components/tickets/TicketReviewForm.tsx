@@ -114,23 +114,8 @@ export default function TicketReviewForm({
     // REVIEW RULES
     // ==========================================
 
-    const willBeReviewed =
-        ticket.isReviewed ||
-        categoryChanged ||
-        (
-            ticket.status === "OPEN" &&
-            status !== "OPEN"
-        );
-
     const willHaveHumanOverride =
         ticket.isHumanOverride || categoryChanged;
-
-    const canConfirmClassification =
-        !ticket.isReviewed &&
-        ticket.status === "OPEN" &&
-        category === ticket.autoCategory &&
-        !willBeReviewed;
-
 
     // ==========================================
     // RESET FORM
@@ -161,7 +146,7 @@ export default function TicketReviewForm({
 
         event.preventDefault();
 
-        if (loading || !hasChanges) return;
+        if (loading || ticket.isReviewed) return;
 
         setError("");
 
@@ -172,18 +157,6 @@ export default function TicketReviewForm({
 
             setError(
                 "Unable to identify the authenticated user."
-            );
-
-            return;
-        }
-
-
-        // Ensure review will be completed
-
-        if (!willBeReviewed) {
-
-            setError(
-                "To complete the review, change the category or move the ticket from Open to another appropriate status."
             );
 
             return;
@@ -207,14 +180,8 @@ export default function TicketReviewForm({
 
         // Prepare PATCH payload
 
-        const updates: UpdateTicketPayload = {};
-
-
-        if (categoryChanged) {
-
-            updates.category = category;
-
-        }
+        // Explicit category submission confirms the classification.
+        const updates: UpdateTicketPayload = { category };
 
         if (priorityChanged) {
 
@@ -232,14 +199,6 @@ export default function TicketReviewForm({
 
             updates.assigneeId = normalizedAssignee;
 
-        }
-
-
-        if (Object.keys(updates).length === 0) {
-
-            setError("No changes to save.");
-
-            return;
         }
 
 
@@ -314,86 +273,6 @@ export default function TicketReviewForm({
         }
 
     }
-    async function handleConfirmClassification() {
-        if (loading) return;
-
-        setError("");
-
-        if (!user?.email) {
-            setError("Unable to identify the authenticated user.");
-            return;
-        }
-
-        if (
-            ticket.isReviewed ||
-            ticket.status !== "OPEN" ||
-            category !== ticket.autoCategory
-        ) {
-            setError("Unable to confirm this classification.");
-            return;
-        }
-
-        if (
-            normalizedAssignee !== null &&
-            !/^[a-f\d]{24}$/i.test(normalizedAssignee)
-        ) {
-            setError("Invalid assignee ID.");
-            return;
-        }
-
-        const updates: UpdateTicketPayload = {
-            status: status === "OPEN"
-                ? "IN_PROGRESS"
-                : status
-        };
-
-        if (categoryChanged) {
-            updates.category = category;
-        }
-
-        if (priorityChanged) {
-            updates.priority = priority;
-        }
-
-        if (assigneeChanged) {
-            updates.assigneeId = normalizedAssignee;
-        }
-
-        setLoading(true);
-
-        try {
-            const response = await updateTicket(
-                ticket._id,
-                updates,
-                user.email
-            );
-
-            if (!response.ticket.isReviewed) {
-                setError("Unable to complete the review.");
-                return;
-            }
-
-            onUpdated(response);
-
-        } catch (err) {
-            if (axios.isAxiosError(err)) {
-                const message =
-                    err.response?.data?.error?.message ??
-                    err.response?.data?.message;
-
-                setError(
-                    typeof message === "string"
-                        ? message
-                        : "Unable to confirm classification."
-                );
-            } else {
-                setError("Something went wrong.");
-            }
-        } finally {
-            setLoading(false);
-        }
-    }
-
     // ==========================================
     // RENDER FORM
     // ==========================================
@@ -479,13 +358,11 @@ export default function TicketReviewForm({
 
                             <p className="mt-2 text-xs leading-relaxed text-indigo-600">
 
-                                Verify the automated category and
-                                priority. If the category is correct,
-                                move the ticket from Open to In Progress
-                                or another appropriate status.
-
-                                If the category is incorrect, select
-                                the correct category.
+                                Verify the automated category and priority.
+                                If the category is correct, click Save Review
+                                without changing it. Otherwise, select the correct
+                                category. The ticket status will remain unchanged
+                                unless you choose a different status.
 
                             </p>
 
@@ -656,17 +533,7 @@ export default function TicketReviewForm({
 
                     </select>
 
-                    {!ticket.isReviewed &&
-                        ticket.status === "OPEN" && (
 
-                        <p className="mt-2 text-xs text-slate-500">
-
-                            Moving the ticket out of Open will
-                            mark it as reviewed.
-
-                        </p>
-
-                    )}
 
                 </div>
 
@@ -827,16 +694,10 @@ export default function TicketReviewForm({
                             </span>
 
                             <span
-                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                    (willBeReviewed || canConfirmClassification)
-                                        ? "bg-emerald-100 text-emerald-700"
-                                        : "bg-amber-100 text-amber-700"
-                                }`}
+                                className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700"
                             >
 
-                                {(willBeReviewed || canConfirmClassification)
-                                    ? "Reviewed"
-                                    : "Pending Review"}
+                                Reviewed
 
                             </span>
 
@@ -885,7 +746,7 @@ export default function TicketReviewForm({
                                 {
                                     Number(categoryChanged) +
                                     Number(priorityChanged) +
-                                    Number(statusChanged || canConfirmClassification) +
+                                    Number(statusChanged) +
                                     Number(assigneeChanged)
                                 }
 
@@ -900,7 +761,7 @@ export default function TicketReviewForm({
 
                 {/* Review Completion Feedback */}
 
-                {!ticket.isReviewed && willBeReviewed && (
+                {!ticket.isReviewed && (
 
                     <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
 
@@ -932,52 +793,6 @@ export default function TicketReviewForm({
                 )}
 
 
-                {/* Incomplete Review Warning */}
-
-                {!willBeReviewed && hasChanges && !canConfirmClassification && (
-
-                    <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-700">
-
-                        <AlertCircle
-                            size={18}
-                            className="shrink-0"
-                        />
-
-                        <p>
-
-                            Changing only the priority or assignee
-                            does not complete the review. Update
-                            the category or move the ticket out of Open.
-
-                        </p>
-
-                    </div>
-
-                )}
-
-               {canConfirmClassification && (
-
-                    <div className="space-y-2">
-
-                        <Button
-                            variant="primary"
-                            size="fullWidth"
-                            type="button"
-                            text="Confirm Classification"
-                            startIcon={<CircleCheck size={18} />}
-                            loading={loading}
-                            disabled={!user || loading}
-                            onClick={handleConfirmClassification}
-                        />
-
-                        <p className="text-center text-xs text-slate-500">
-                            Confirming the classification will move
-                            the ticket to In Progress and save your changes.
-                        </p>
-
-                    </div>
-
-                )}
                 {/* Form Actions */}
 
                 <div className="flex flex-wrap gap-3 border-t border-slate-200 pt-5">
@@ -992,7 +807,6 @@ export default function TicketReviewForm({
                         onClick={resetForm}
                     />
 
-                    {!canConfirmClassification && (
                         <Button
                             variant="primary"
                             size="md"
@@ -1002,13 +816,10 @@ export default function TicketReviewForm({
                             endIcon={<ArrowRight size={16} />}
                             loading={loading}
                             disabled={
-                                !hasChanges ||
-                                !willBeReviewed ||
-                                !user
+                                !user?.email || loading || ticket.isReviewed
                             }
                             className="flex-1"
                         />
-                    )}
 
                 </div>
 

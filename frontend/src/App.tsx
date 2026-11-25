@@ -10,6 +10,9 @@ import AdminDashboardLayout from './components/layouts/AdminDashboardLayout';
 import RoleProtectedRoute from './components/auth/RoleProtectedRoute';
 import TicketDetails from "./pages/TicketDetails";
 import TriageQueue from "./pages/TriageQueue";
+import ManageResources from "./pages/admin/ManageResources";
+import Resources from "./pages/Resources";
+import ResourceDetails from "./pages/ResourceDetails";
 function ComingSoon({ title }: { title: string }) {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center">
@@ -51,7 +54,11 @@ export default function App() {
             />
           <Route path="bookings" element={<ComingSoon title="My Bookings" />} />
 
-          <Route path="resources" element={<ComingSoon title="Resources" />} />
+          <Route path="resources" element={<Resources/>} />
+          <Route
+               path="resources/:id"
+               element={<ResourceDetails />}
+          />
         </Route>
       </Route>
 
@@ -75,8 +82,12 @@ export default function App() {
            />
           <Route
             path="resources"
-            element={<ComingSoon title="Manage Resources" />}
+            element={<ManageResources/>}
           />
+           <Route
+                path="resources/:id"
+                element={<ResourceDetails/>}
+            />
 
           <Route
             path="bookings"

@@ -10,8 +10,7 @@ import {
   CalendarClock,
   ArrowRight,
   RefreshCw,
-  LoaderCircle,
-  Upload,
+  LoaderCircle
 } from 'lucide-react';
 
 import StatCard from '../components/dashboard/StatCard';
@@ -255,23 +254,6 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-            variant="secondary"
-            size="md"
-            text="Refresh"
-            startIcon={<RefreshCw size={18} />}
-            onClick={refreshDashboard}
-          />
-
-          <Link
-            to="/dashboard/tickets"
-            className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
-          >
-            <Upload size={18} />
-            Import Tickets
-          </Link>
-        </div>
       </section>
 
       {/* Statistics Cards */}

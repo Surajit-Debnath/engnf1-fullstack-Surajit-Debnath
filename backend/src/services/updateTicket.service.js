@@ -3,6 +3,7 @@ const User = require('../models/User');
 
 async function updateTicket(ticket, updates, actor) {
   const events = [];
+
   if (
     Object.prototype.hasOwnProperty.call(updates, 'assigneeId') &&
     updates.assigneeId !== null
@@ -15,12 +16,17 @@ async function updateTicket(ticket, updates, actor) {
       };
     }
   }
+
+  const categoryProvided = updates.category !== undefined;
+
   const categoryChanged =
-    updates.category !== undefined && updates.category !== ticket.category;
+    categoryProvided && updates.category !== ticket.category;
+
   const statusChangedFromOpen =
     updates.status !== undefined &&
     ticket.status === 'OPEN' &&
     updates.status !== 'OPEN';
+
   const fields = ['category', 'priority', 'status', 'assigneeId'];
 
   for (const field of fields) {
@@ -32,10 +38,14 @@ async function updateTicket(ticket, updates, actor) {
     const newValue = updates[field];
 
     const oldComparable =
-      oldValue === null || oldValue === undefined ? null : String(oldValue);
+      oldValue === null || oldValue === undefined
+        ? null
+        : String(oldValue);
 
     const newComparable =
-      newValue === null || newValue === undefined ? null : String(newValue);
+      newValue === null || newValue === undefined
+        ? null
+        : String(newValue);
 
     if (oldComparable === newComparable) {
       continue;
@@ -51,13 +61,19 @@ async function updateTicket(ticket, updates, actor) {
 
     ticket[field] = newValue;
   }
+
+  // Activate human override only if the category changes.
   if (categoryChanged) {
     ticket.isHumanOverride = true;
   }
-  if (categoryChanged || statusChangedFromOpen) {
+
+  // Mark as reviewed even if the submitted category is unchanged.
+  if (categoryProvided || statusChangedFromOpen) {
     ticket.isReviewed = true;
   }
+
   await ticket.save();
+
   if (events.length > 0) {
     await TicketEvent.insertMany(events);
   }
