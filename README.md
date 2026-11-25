@@ -11,7 +11,7 @@ TriageSync is a full-stack support ticket triage and shared-resource scheduling 
 
 | Service | URL |
 | --- | --- |
-| Deployed frontend | TBD — add deployed frontend URL |
+| Deployed frontend | https://triagesync-bt2jbwta0-surajit-debnaths-projects.vercel.app/ |
 | Deployed backend | https://engnf1-fullstack-surajit-debnath.onrender.com/ |
 | Local frontend | http://localhost:5173 |
 | Local API | http://localhost:3000/api |
