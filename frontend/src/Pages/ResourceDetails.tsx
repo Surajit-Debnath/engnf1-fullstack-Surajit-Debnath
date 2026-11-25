@@ -16,7 +16,6 @@ import {
     Users,
     Layers,
     CalendarDays,
-    CalendarClock,
     FileText,
     Pencil,
     RefreshCw,
@@ -36,7 +35,19 @@ import { resourceTypeLabels } from "../types/resource";
 
 import type { Resource } from "../types/resource";
 import type { User } from "../types/dashboard";
+import ResourceAvailability from
+    "../components/resources/ResourceAvailability";
 
+import BookingFormModal from
+    "../components/bookings/BookingFormModal";
+
+import type {
+    AvailableSlot
+} from "../components/resources/ResourceAvailability";
+
+import type {
+    Booking
+} from "../types/booking";
 
 // ==========================================
 // RESOURCE ICONS
@@ -63,7 +74,6 @@ interface DashboardContext {
     user: User | null;
 }
 
-
 // ==========================================
 // RESOURCE DETAILS PAGE
 // ==========================================
@@ -82,7 +92,7 @@ export default function ResourceDetails() {
         : "/dashboard";
 
     const backPath = `${dashboardPath}/resources`;
-
+    
 
     // ==========================================
     // PAGE STATE
@@ -103,7 +113,13 @@ export default function ResourceDetails() {
     const [successMessage, setSuccessMessage] =
         useState("");
 
+    // ==========================================
+    // BOOKING STATE
+    // ==========================================
 
+    const [selectedBookingSlot, setSelectedBookingSlot] =useState<AvailableSlot | null>(null);
+
+    const [availabilityRefreshKey, setAvailabilityRefreshKey] =useState(0);    
     // ==========================================
     // FETCH RESOURCE DETAILS
     // ==========================================
@@ -208,7 +224,9 @@ export default function ResourceDetails() {
 
     function handleRefresh() {
 
-        setRefreshKey(previous => previous + 1);
+    setSelectedBookingSlot(null);
+
+    setRefreshKey(previous => previous + 1);
 
     }
 
@@ -232,7 +250,57 @@ export default function ResourceDetails() {
         setRefreshKey(previous => previous + 1);
 
     }
+    // ==========================================
+// OPEN BOOKING MODAL
+// ==========================================
 
+function handleSlotSelected(slot: AvailableSlot) {
+
+    if (!resource || !resource.isActive || !user) {
+        return;
+    }
+
+    setSuccessMessage("");
+
+    setSelectedBookingSlot(slot);
+
+}
+
+
+// ==========================================
+// CLOSE BOOKING MODAL
+// ==========================================
+
+function handleBookingModalClose() {
+
+    setSelectedBookingSlot(null);
+
+}
+
+
+// ==========================================
+// HANDLE SUCCESSFUL BOOKING
+// ==========================================
+
+function handleBookingSuccess(booking: Booking) {
+
+    setSelectedBookingSlot(null);
+
+    setSuccessMessage(
+
+        booking.status === "PENDING"
+
+            ? "Booking request submitted successfully. Your request is awaiting administrator approval."
+
+            : "Booking created successfully."
+
+    );
+
+    setAvailabilityRefreshKey(
+        previous => previous + 1
+    );
+
+}
 
     // ==========================================
     // LOADING STATE
@@ -687,75 +755,73 @@ export default function ResourceDetails() {
 
             {/* Resource Availability */}
 
-            <section className="rounded-2xl border border-slate-200 bg-white p-6">
+<section className="rounded-2xl border border-slate-200 bg-white p-6">
 
-                <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3">
 
-                    <div className="rounded-xl bg-indigo-50 p-3 text-indigo-600">
+        <div className="rounded-xl bg-indigo-50 p-3 text-indigo-600">
 
-                        <CalendarDays size={24} />
+            <CalendarDays size={24} />
 
-                    </div>
+        </div>
 
-                    <div>
+        <div>
 
-                        <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-slate-900">
 
-                            Resource Availability
+                Resource Availability
 
-                        </h2>
+            </h2>
 
-                        <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-500">
 
-                            View occupied and available time slots.
+                View occupied time slots and schedule
+                a resource booking.
 
-                        </p>
+            </p>
 
-                    </div>
+        </div>
 
-                </div>
+    </div>
 
-                {resource.isActive ? (
+    {resource.isActive ? (
 
-                    <div className="mt-6 flex min-h-56 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+        <div className="mt-6">
 
-                        <CalendarClock
-                            size={42}
-                            className="text-indigo-400"
-                        />
+            <ResourceAvailability
 
-                        <h3 className="mt-4 font-semibold text-slate-800">
+                key={resource._id}
 
-                            Availability Calendar
+                resourceId={resource._id}
 
-                        </h3>
+                refreshTrigger={availabilityRefreshKey}
 
-                        <p className="mt-2 max-w-md text-sm text-slate-500">
+                onSelectSlot={
+                    user
+                        ? handleSlotSelected
+                        : undefined
+                }
 
-                            The availability calendar will be
-                            integrated in the next development step.
+            />
 
-                        </p>
+        </div>
 
-                    </div>
+    ) : (
 
-                ) : (
+        <div className="mt-6 rounded-xl bg-slate-50 p-6 text-center">
 
-                    <div className="mt-6 rounded-xl bg-slate-50 p-6 text-center">
+            <p className="text-sm text-slate-500">
 
-                        <p className="text-sm text-slate-500">
+                Availability is not displayed for
+                inactive resources.
 
-                            Availability is not displayed for
-                            inactive resources.
+            </p>
 
-                        </p>
+        </div>
 
-                    </div>
+    )}
 
-                )}
-
-            </section>
-
+</section>
 
             {/* Edit Resource Modal — Admin Only */}
 
@@ -769,6 +835,25 @@ export default function ResourceDetails() {
                 />
 
             )}
+            {/* Booking Form Modal */}
+
+            {selectedBookingSlot && resource.isActive && user && (
+            
+                <BookingFormModal
+            
+                    key={`${resource._id}-${selectedBookingSlot.startTime}`}
+
+                    resource={resource}
+            
+                    slot={selectedBookingSlot}
+            
+                    onClose={handleBookingModalClose}
+            
+                    onSuccess={handleBookingSuccess}
+            
+                />
+            
+            )}            
 
         </div>
 

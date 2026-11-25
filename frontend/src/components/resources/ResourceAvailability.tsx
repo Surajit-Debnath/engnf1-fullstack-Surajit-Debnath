@@ -25,7 +25,9 @@ import type {
     ResourceBookingSlot
 } from "../../types/resource";
 
-
+import {
+    BOOKING_CONSTRAINTS
+} from "../../types/booking";
 // ==========================================
 // TYPES
 // ==========================================
@@ -36,8 +38,13 @@ export interface AvailableSlot {
 }
 
 interface ResourceAvailabilityProps {
+
     resourceId: string;
+
+    refreshTrigger?: number;
+
     onSelectSlot?: (slot: AvailableSlot) => void;
+
 }
 
 type SlotStatus =
@@ -65,11 +72,51 @@ const DAYS_PER_WEEK = 7;
 const MAX_RANGE_MS =
     7 * 24 * 60 * 60 * 1000;
 
+const BOOKING_SLOT_MS =
+    BOOKING_CONSTRAINTS.SLOT_INTERVAL_MINUTES *
+    60 * 1000;
+
+const MIN_BOOKING_MS =
+    BOOKING_CONSTRAINTS.MIN_DURATION_MINUTES *
+    60 * 1000;
+
+const MAX_ADVANCE_MS =
+    BOOKING_CONSTRAINTS.MAX_ADVANCE_DAYS *
+    24 * 60 * 60 * 1000;
 
 // ==========================================
 // DATE UTILITIES
 // ==========================================
+function isBookableSlot(
+    slot: TimeSlot,
+    now: number
+): boolean {
 
+    if (slot.status !== "AVAILABLE") {
+        return false;
+    }
+
+    const start = Math.max(
+        new Date(slot.startTime).getTime(),
+        now + 1
+    );
+
+    const alignedStart =
+        Math.ceil(start / BOOKING_SLOT_MS) *
+        BOOKING_SLOT_MS;
+
+    const end =
+        new Date(slot.endTime).getTime();
+
+    return (
+
+        alignedStart + MIN_BOOKING_MS <= end &&
+
+        alignedStart <= now + MAX_ADVANCE_MS
+
+    );
+
+}
 function startOfDay(date: Date): Date {
 
     const result = new Date(date);
@@ -334,6 +381,7 @@ const slotIcons = {
 
 export default function ResourceAvailability({
     resourceId,
+    refreshTrigger = 0,
     onSelectSlot
 }: ResourceAvailabilityProps) {
 
@@ -507,7 +555,8 @@ export default function ResourceAvailability({
     }, [
         resourceId,
         weekStart,
-        refreshKey
+        refreshKey,
+        refreshTrigger
     ]);
 
 
@@ -639,38 +688,41 @@ export default function ResourceAvailability({
     // SELECT AVAILABLE INTERVAL
     // ==========================================
 
-    function handleSlotSelect(slot: TimeSlot) {
+       function handleSlotSelect(slot: TimeSlot) {
 
     if (
         loading ||
         error ||
-        slot.status !== "AVAILABLE"
+        !isBookableSlot(slot, now)
     ) {
         return;
     }
 
     const start = Math.max(
         new Date(slot.startTime).getTime(),
-        now
+        now + 1
     );
 
-    const end = new Date(slot.endTime).getTime();
-
-    if (start >= end) return;
+    const alignedStart =
+        Math.ceil(start / BOOKING_SLOT_MS) *
+        BOOKING_SLOT_MS;
 
     setSelectedSlot({
-        startTime: new Date(start).toISOString(),
+
+        startTime:
+            new Date(alignedStart).toISOString(),
+
         endTime: slot.endTime
+
     });
 
 }
-
 
     // ==========================================
     // CONFIRM INTERVAL SELECTION
     // ==========================================
 
- function handleContinue() {
+       function handleContinue() {
 
     if (
         !selectedSlot ||
@@ -684,23 +736,34 @@ export default function ResourceAvailability({
 
     const start = Math.max(
         new Date(selectedSlot.startTime).getTime(),
-        now
+        now + 1
     );
 
-    const end = new Date(
-        selectedSlot.endTime
-    ).getTime();
+    const alignedStart =
+        Math.ceil(start / BOOKING_SLOT_MS) *
+        BOOKING_SLOT_MS;
 
-    if (start >= end) {
+    const end =
+        new Date(selectedSlot.endTime).getTime();
+
+    if (
+        alignedStart + MIN_BOOKING_MS > end ||
+        alignedStart > now + MAX_ADVANCE_MS
+    ) {
 
         setSelectedSlot(null);
+
         return;
 
     }
 
     onSelectSlot({
-        startTime: new Date(start).toISOString(),
-        endTime: new Date(end).toISOString()
+
+        startTime:
+            new Date(alignedStart).toISOString(),
+
+        endTime: selectedSlot.endTime
+
     });
 
 }
@@ -1092,15 +1155,16 @@ export default function ResourceAvailability({
                                     slot.endTime &&
                                 slot.status === "AVAILABLE";
 
-                            const isAvailable =
-                                slot.status === "AVAILABLE";
+                            const isAvailable = isBookableSlot(slot, now);;
 
                             return (
 
                                 <button
                                     key={slot.startTime}
                                     type="button"
-                                    disabled={!isAvailable}
+                                    disabled={  !isAvailable ||
+                                                loading ||
+                                             Boolean(error)}
                                     aria-pressed={isSelected}
                                     onClick={() =>
                                         handleSlotSelect(slot)
@@ -1133,7 +1197,9 @@ export default function ResourceAvailability({
 
                                             <p className={`mt-1 text-xs font-medium ${styles.icon}`}>
 
-                                                {styles.label}
+                                                {slot.status === "AVAILABLE" && !isAvailable
+                                                       ? "Outside booking limits"
+                                                       : styles.label}
 
                                             </p>
 
